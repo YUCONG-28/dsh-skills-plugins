@@ -13,7 +13,7 @@
  * 首次收到事件自动拉起活动桌宠（spawn 后台进程，引擎单实例锁兜底重复拉起）。
  *
  * 配置：优先 ~/.config/desktop-pets.json，回退 ~/.config/opencode/desktop-pets.json
- *   {"root": "/Users/yucong/desktop-pets", "active": "remiel"}
+ *   {"root": "<库根>", "active": "remiel"}   （<库根> = dsh-skills-plugins/projects/desktop-pets）
  * root 缺省从本文件位置推导仓库根（file: 链接安装保留真实路径），无需硬编码。
  *
  * 安全：所有文件操作与 spawn 全部 try/catch 静默——插件任何情况下都不影响 DSH。
