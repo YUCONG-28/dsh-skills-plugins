@@ -1,0 +1,19 @@
+{
+  "name": "dsh-vision-bridge",
+  "version": "0.1.0",
+  "description": "DeepSeek Harness plugin: when the main (text-only) model receives images, automatically caption them with a Qwen VL model and let DeepSeek continue the task.",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js"
+  },
+  "files": [
+    "lib",
+    "README.md"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@deepseek-ai/dsh-llm": "^0.1.0-rc.6",
+    "@deepseek-ai/schemastery": "^3.18.1"
+  }
+}
