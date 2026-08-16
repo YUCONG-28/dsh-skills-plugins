@@ -1,10 +1,15 @@
 /**
  * dsh-web-pets —— DSH Web 桌宠插件（浏览器侧）
  *
- * 全局悬浮桌宠：轮询宿主 /api/web-pets/state（~800ms，仅前台标签页），
- * 按宠物状态渲染对应表情 GIF；点击互动弹「❤️」气泡；右键弹出菜单：
- * 切换宠物 / 调整大小 / 隐藏。宠物为宿主全局对象（无会话维度），因此
- * 直接挂载到 document.body 上的单个 React 根，而非会话级 slot。
+ * 两块表面：
+ * 1. 全局悬浮桌宠：轮询宿主 /api/web-pets/state（~800ms，仅前台标签页），
+ *    按宠物状态渲染对应表情 GIF；点击互动弹「❤️」气泡；右键弹出菜单：
+ *    切换宠物 / 调整大小 / 隐藏。宠物为宿主全局对象（无会话维度），因此
+ *    直接挂载到 document.body 上的单个 React 根，而非会话级 slot。
+ * 2. dsh-web-ui 宠物入口设置卡片：注册进 `web-ui.plugin.item` 槽位（与上游
+ *    dsh-pet 的「宠物」卡片同一位），卡片自包含——直接读写 /api/web-pets/*
+ *    （不依赖 settings namespace：rc.6 官方 settings 白名单硬编码，第三方
+ *    namespace 不可写），用户可在设置里选择宠物 / 调整大小 / 显隐。
  *
  * 本文件为手写产物（无构建步骤）：遵循官方客户端 bundle 形态——
  * __ModuleLoader__.load({ id, factory }) + exports.apply / exports.inject。
@@ -29,6 +34,7 @@ window.__ModuleLoader__.load({
 			tag.dataset.plugin = "dsh-web-pets";
 			tag.dataset.pluginCss = CSS_ID;
 			tag.textContent = [
+				// 悬浮桌宠
 				".dwp-root{position:fixed;right:24px;bottom:20px;z-index:2147483000;font-family:system-ui,-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;user-select:none}",
 				".dwp-pet{position:relative;cursor:pointer;line-height:0}",
 				".dwp-pet img{width:100%;height:auto;image-rendering:auto;border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,.28);background:transparent;transition:transform .15s}",
@@ -46,8 +52,55 @@ window.__ModuleLoader__.load({
 				".dwp-menu-row button:hover{background:rgba(255,255,255,.2)}",
 				".dwp-summon{position:fixed;right:24px;bottom:20px;z-index:2147483000;width:44px;height:44px;border:0;border-radius:50%;background:rgba(24,22,38,.92);color:#b07ce8;font-size:20px;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.4)}",
 				".dwp-summon:hover{transform:scale(1.08)}",
+				// 设置卡片（dsh-web-ui 宠物入口）
+				".dwp-card{list-style:none;border:1px solid var(--dsw-alias-border-l2, rgba(255,255,255,.1));border-radius:10px;padding:12px 14px;margin:0;background:var(--dsw-alias-bg-layer-2, rgba(255,255,255,.03))}",
+				".dwp-card-title{font-size:13px;font-weight:600;color:var(--dsw-alias-label-primary, #efeaff);margin:0 0 2px}",
+				".dwp-card-desc{font-size:12px;color:var(--dsw-alias-label-tertiary, #8b84a0);margin:0 0 10px}",
+				".dwp-card-section{font-size:11px;color:var(--dsw-alias-label-tertiary, #8b84a0);margin:8px 0 4px}",
+				".dwp-card-pets{display:flex;flex-wrap:wrap;gap:6px}",
+				".dwp-card-pet{border:1px solid var(--dsw-alias-border-l2, rgba(255,255,255,.12));border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;background:transparent;color:var(--dsw-alias-label-primary, #efeaff)}",
+				".dwp-card-pet:hover{border-color:var(--dsw-alias-state-business-primary, #b07ce8)}",
+				".dwp-card-pet.active{border-color:var(--dsw-alias-state-business-primary, #b07ce8);color:var(--dsw-alias-state-business-primary, #b07ce8)}",
+				".dwp-card-row{display:flex;align-items:center;gap:8px;margin-top:8px}",
+				".dwp-card-btn{border:1px solid var(--dsw-alias-border-l2, rgba(255,255,255,.12));border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;background:transparent;color:var(--dsw-alias-label-primary, #efeaff)}",
+				".dwp-card-btn:hover{border-color:var(--dsw-alias-state-business-primary, #b07ce8)}",
+				".dwp-card-size{font-size:12px;color:var(--dsw-alias-label-primary, #efeaff);min-width:52px;text-align:center;font-variant-numeric:tabular-nums}",
+				".dwp-card-status{font-size:11px;color:var(--dsw-alias-label-tertiary, #8b84a0);margin-top:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
 			].join("");
 			document.head.appendChild(tag);
+		}
+
+		// ------------------------------------------------------------------
+		// 文案（zh / en）
+		// ------------------------------------------------------------------
+		const LOCALES = {
+			zh: {
+				"card.title": "桌宠",
+				"card.description": "随会话状态换表情的浏览器桌宠",
+				"card.pet": "宠物（点击切换）",
+				"card.size": "大小",
+				"card.visible": "显示",
+				"card.hidden": "隐藏",
+				"card.status": "状态",
+				"card.loading": "加载中…",
+			},
+			en: {
+				"card.title": "Web Pets",
+				"card.description": "Browser pet that reacts to session activity",
+				"card.pet": "Pet (click to switch)",
+				"card.size": "Size",
+				"card.visible": "Show",
+				"card.hidden": "Hide",
+				"card.status": "Status",
+				"card.loading": "Loading…",
+			},
+		};
+
+		/** 读当前语言字典。 */
+		function t(key) {
+			const lang = (typeof navigator !== "undefined" && navigator.language) || "zh";
+			const dict = String(lang).toLowerCase().startsWith("zh") ? LOCALES.zh : LOCALES.en;
+			return dict[key] ?? LOCALES.zh[key] ?? key;
 		}
 
 		// ------------------------------------------------------------------
@@ -116,7 +169,7 @@ window.__ModuleLoader__.load({
 				? createElement(
 						"div",
 						{ className: "dwp-menu", ref: menuRef, onClick: (e) => e.stopPropagation() },
-						createElement("div", { className: "dwp-menu-title" }, "切换宠物"),
+						createElement("div", { className: "dwp-menu-title" }, t("card.pet")),
 						snapshot.pets.map((pet) =>
 							createElement(
 								"button",
@@ -144,7 +197,7 @@ window.__ModuleLoader__.load({
 						createElement(
 							"button",
 							{ className: "dwp-menu-item", onClick: () => actions.hide() },
-							"🙈 隐藏宠物",
+							"🙈 " + t("card.hidden"),
 						),
 					)
 				: null;
@@ -179,28 +232,145 @@ window.__ModuleLoader__.load({
 		function SummonButton(props) {
 			return createElement(
 				"button",
-				{ className: "dwp-summon", title: "召唤桌宠", onClick: () => props.onSummon() },
+				{ className: "dwp-summon", title: t("card.visible"), onClick: () => props.onSummon() },
 				"🐾",
+			);
+		}
+
+		/**
+		 * dsh-web-ui 宠物入口设置卡片（注册进 web-ui.plugin.item 槽位）。
+		 * 自包含：直接轮询 /api/web-pets/state 并在操作后写 /api/web-pets/set-*，
+		 * 不依赖 settings namespace（rc.6 官方白名单硬编码，第三方 namespace 不可写）。
+		 */
+		function WebPetsSettingsCard() {
+			const [snapshot, setSnapshot] = useState(null);
+			const [pending, setPending] = useState(null);
+
+			useEffect(() => {
+				let timer = undefined;
+				const poll = () => {
+					petApi.state().then(setSnapshot, () => {});
+				};
+				poll();
+				timer = window.setInterval(poll, 1000);
+				return () => window.clearInterval(timer);
+			}, []);
+
+			if (snapshot === null) {
+				return createElement(
+					"li",
+					{ className: "dwp-card" },
+					createElement("p", { className: "dwp-card-title" }, t("card.title")),
+					createElement("p", { className: "dwp-card-desc" }, t("card.loading")),
+				);
+			}
+
+			const act = (fn) => {
+				setPending(true);
+				fn().then(() => {
+					setPending(false);
+					petApi.state().then(setSnapshot, () => {});
+				}, () => setPending(false));
+			};
+
+			const size = Math.max(40, Math.min(480, snapshot.size || 160));
+
+			return createElement(
+				"li",
+				{ className: "dwp-card" },
+				createElement("p", { className: "dwp-card-title" }, t("card.title")),
+				createElement("p", { className: "dwp-card-desc" }, t("card.description")),
+				createElement("p", { className: "dwp-card-section" }, t("card.pet")),
+				createElement(
+					"div",
+					{ className: "dwp-card-pets" },
+					snapshot.pets.map((pet) =>
+						createElement(
+							"button",
+							{
+								key: pet.id,
+								className:
+									"dwp-card-pet" +
+									(pet.id === snapshot.activePet ? " active" : "") +
+									(pending ? " dwp-card-disabled" : ""),
+								disabled: pending,
+								onClick: () => {
+									if (pet.id !== snapshot.activePet) {
+										act(() => petApi.setPet(pet.id));
+									}
+								},
+							},
+							pet.displayName,
+						),
+					),
+				),
+				createElement("p", { className: "dwp-card-section" }, t("card.size")),
+				createElement(
+					"div",
+					{ className: "dwp-card-row" },
+					createElement(
+						"button",
+						{ className: "dwp-card-btn", disabled: pending, onClick: () => act(() => petApi.setSize(size - 20)) },
+						"−",
+					),
+					createElement("span", { className: "dwp-card-size" }, `${size}px`),
+					createElement(
+						"button",
+						{ className: "dwp-card-btn", disabled: pending, onClick: () => act(() => petApi.setSize(size + 20)) },
+						"+",
+					),
+					createElement(
+						"button",
+						{ className: "dwp-card-btn", disabled: pending, onClick: () => act(() => petApi.setVisible(!snapshot.visible)) },
+						snapshot.visible ? t("card.hidden") : t("card.visible"),
+					),
+				),
+				createElement(
+					"p",
+					{ className: "dwp-card-status" },
+					`${t("card.status")}: ${snapshot.state}${snapshot.bubble ? " · " + snapshot.bubble : ""}`,
+				),
 			);
 		}
 
 		// ------------------------------------------------------------------
 		// 客户端插件主体
 		// ------------------------------------------------------------------
-		/** 所需服务（本插件只用 DOM 与 fetch，无需任何 ctx 服务）。 */
-		const inject = [];
+		/** 所需服务：slots（设置卡片槽位注册）+ locale（文案字典）。 */
+		const inject = ["slots", "locale"];
 
 		/** 模块级防重入（热重载/重复 apply 时只挂载一次）。 */
 		let mounted = false;
 
 		/**
-		 * 客户端主体：挂载全局桌宠根节点并启动轮询。
-		 * @param ctx - 客户端根上下文（本插件不使用其服务）。
+		 * 客户端主体：注册 dsh-web-ui 宠物入口设置卡片 + 挂载全局桌宠。
+		 * @param ctx - 客户端根上下文。
 		 */
 		function apply(ctx) {
 			if (mounted) return;
 			mounted = true;
 
+			// ---- 文案字典（官方 locale 机制） ----
+			try {
+				ctx.effect(() => ctx.locale.register("web-pets", LOCALES), "web-pets: dictionaries");
+			} catch {
+				// locale 服务缺失时静默（卡片用内置 t() 兜底）
+			}
+
+			// ---- dsh-web-ui 宠物入口：设置卡片（web-ui.plugin.item 槽位） ----
+			try {
+				ctx.slots.inject("web-ui.plugin.item", () => ctx.slots.register({
+					name: "web-ui.plugin.item",
+					id: "web-pets-settings",
+					order: 150,
+					locale: "web-pets",
+					inject: () => ({}),
+				}, WebPetsSettingsCard));
+			} catch {
+				// 无该槽位（未安装 dsh-web-ui-settings 组）时注册无害，忽略
+			}
+
+			// ---- 全局悬浮桌宠 ----
 			let snapshot = null;
 			let feedback = "";
 			let feedbackTimer = undefined;

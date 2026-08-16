@@ -28,8 +28,8 @@ import { dirname, join } from 'node:path'
 /** 插件条目 id（cordis.yml 中的 id）。 */
 export const name = 'desktop-pets'
 
-/** 依赖的服务：dsh-session（session/event 事件源）。 */
-export const inject = ['session']
+/** 依赖的服务：dsh-session（sessions 会话存储 + session/event 事件源）。 */
+export const inject = ['sessions']
 
 /** 配置文件候选路径（按优先级）。 */
 const CONFIG_CANDIDATES = [

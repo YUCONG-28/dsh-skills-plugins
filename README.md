@@ -61,7 +61,7 @@ dsh plugin --profile web add link:$(pwd)/plugins/dsh-web-pets
 # 方式二：file: 依赖 + 手工在 profile 的 cordis.patch.yml 加 insert 行（id: web-pets）
 ```
 
-安装后重启 `dsh web`，刷新页面右下角出现桌宠（内置 demo / remiel），右键可切换宠物、调整大小、隐藏。替换/新增宠物形象：往 `plugins/dsh-web-pets/assets/pets/<名字>/` 放 `pet.json` + `emotes/` 即可（详见插件 README）。
+安装后重启 `dsh web`，刷新页面右下角出现桌宠（内置 demo / remiel），右键可切换宠物、调整大小、隐藏；**设置 → Web UI 插件**组里出现「桌宠」设置卡片（与上游 dsh-pet 同一宠物入口槽位），可在卡片内选择宠物 / 调大小 / 显隐。替换/新增宠物形象：往 `plugins/dsh-web-pets/assets/pets/<名字>/` 放 `pet.json` + `emotes/` 即可（详见插件 README）。
 
 ### 项目：desktop-pets（macOS 原生多桌宠）
 
@@ -84,6 +84,7 @@ scripts/petctl.sh remiel start          # 启动桌宠
 
 - 本仓库是**规范源（canonical）**：本机 DSH 环境的 `dsh-vision-bridge`、`dsh-desktop-pets`（桌面联动）与 `dsh-web-pets` 均通过 `file:` 依赖指向仓库内路径。
 - 修改插件：直接改本仓库 `plugins/<name>/`，然后在 profile 目录（`~/.dsh/profiles/web`）执行 `pnpm install` 刷新安装副本（提示 "Already up to date" 时先删除 `node_modules/<name>` 再装），重启 dsh web 生效。
+- **硬链接提醒**：`dsh-web-pets` 与 `dsh-vision-bridge` 的 `node_modules` 安装副本是源码的**硬链接**。用编辑器原地编辑源码会保留硬链接（副本自动同步），但若编辑器**替换**文件（写新 inode），旧硬链接仍指向旧内容 → 重启后运行的是旧代码。改完源码后跑一次 `bash fix-web-profile.sh`（幂等，同步三个插件副本并校验一致性），或执行 `pnpm install` 重链，再重启 dsh web。
 - 新增 Skill：复制到 `skills/<name>/`（含 `SKILL.md`）提交即可；本地安装 `cp -R skills/<name> ~/.dsh/skills/`（DSH 自动发现，无需重启）。
 - 注意：`plugins/dsh-vision-bridge` 的打包范围由 `package.json` 的 `files` 字段决定（当前为 `lib` / `README.md` / `scripts` / `bin`）；`plugins/dsh-web-pets` 的打包范围同理（`lib` / `assets` / `cordis.patch.yml` / `README.md` / `LICENSE`）。
 

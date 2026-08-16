@@ -56,10 +56,37 @@ dsh plugin --profile web add link:/path/to/dsh-skills-plugins/plugins/dsh-web-pe
 
 ## 使用
 
+### dsh-web-ui 宠物入口（设置卡片）
+
+本插件兼容 dsh-web-ui 的宠物入口：安装后，**设置 → Web UI 插件** 组里会出现本插件的「桌宠」卡片（与上游 dsh-pet 鲸鱼宠物的卡片同一槽位 `web-ui.plugin.item`）。卡片内：
+
+- **宠物选择**：列出注册表里所有宠物（demo / remiel / 你添加的），点击即切换（「可根据用户选择进行更换」）；
+- **大小**：− / ＋ 调节（40–480px）；
+- **显示 / 隐藏**：开关桌宠（隐藏后右下角保留 🐾 召唤按钮）；
+- 底部一行实时状态（当前表情状态 + 气泡）。
+
+卡片**自包含**：直接读写 `/api/web-pets/*`，不依赖 settings namespace——rc.6 的官方 settings 白名单是硬编码的，第三方 namespace 无法写入，因此本卡片绕过 namespace 直接调插件 API（上游 dsh-pet 的卡片对未暴露 namespace 也只会显示「不可用」说明，本卡片则是真实可编辑）。
+
+### 悬浮桌宠
+
 - **右键桌宠** → 菜单：切换宠物（内置 demo / remiel）、缩小 / 放大、隐藏宠物。
 - **隐藏后**：右下角出现 🐾 召唤按钮，点击召回。
 - **点击桌宠**：摸头互动气泡。
 - 会话开始工作后桌宠会自动进入对应状态表情。
+
+### 与上游 dsh-pet（鲸鱼宠物）的并存
+
+本插件与上游 `dsh-pet`（`@linxin666/dsh-web-ui-all` 内置的鲸鱼娘宠物）互不冲突，但同时启用时页面右下角会出现**两只宠物**。按需二选一，在 profile 的 `cordis.patch.yml` 里禁用其一：
+
+```yaml
+# 方式 A：用本插件，禁用上游鲸鱼
+- disable: pet
+
+# 方式 B：保留上游鲸鱼，禁用本插件
+- disable: web-pets
+```
+
+修改后重启 `dsh web` 生效。
 
 ## 替换 / 添加宠物形象
 

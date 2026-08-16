@@ -225,6 +225,40 @@ export function isStructuredEvidence(text) {
 }
 
 /**
+ * 从识别结果中容错提取结构化 JSON：文本本身合法 → 原样返回；
+ * 否则提取第一个括号平衡的 `{...}` 块并校验证据形状（容忍 markdown 围栏、前后缀文字、
+ * 多余输出等偶发包装）。提取不到合法证据返回 null。
+ */
+export function extractStructuredJson(text) {
+	if (isStructuredEvidence(text)) return text;
+	const start = text.indexOf('{');
+	if (start === -1) return null;
+	let depth = 0;
+	let inString = false;
+	let escaped = false;
+	for (let index = start; index < text.length; index++) {
+		const ch = text[index];
+		if (inString) {
+			if (escaped) escaped = false;
+			else if (ch === '\\') escaped = true;
+			else if (ch === '"') inString = false;
+			continue;
+		}
+		if (ch === '"') inString = true;
+		else if (ch === '{') depth++;
+		else if (ch === '}') {
+			depth--;
+			if (depth === 0) {
+				const candidate = text.slice(start, index + 1);
+				if (isStructuredEvidence(candidate)) return candidate;
+				break;
+			}
+		}
+	}
+	return null;
+}
+
+/**
  * 把识别/OCR 结果渲染成易读文本注入主模型。
  * @param config - 插件配置。
  * @param text - 识别引擎返回的文本（structured 模式下可能是 JSON）或本地 OCR 全文。
@@ -368,12 +402,20 @@ async function captionImage(ctx, config, options, ref, ownerText, log) {
 			// 探测该引擎是否声明支持 reasoningEffort=off（决定能否关思考）
 			const vision = await resolveVisionInfo(ctx, engine.provider, engine.model, options.signal);
 			let text = await runCaptionOnce(ctx, engineConfig, options, ref, ownerText, vision?.offSupported === true);
-			if (config.captionFormat === 'structured' && config.strictJson && !isStructuredEvidence(text)) {
-				// 重试一次，强化"只输出 JSON"约束
-				const retryPrompt = `${effectivePrompt(engineConfig)}\n\n（注意：必须只输出一个 JSON 对象，不要任何其他文字）`;
-				text = await runCaptionOnce(ctx, { ...engineConfig, prompt: retryPrompt }, options, ref, ownerText, vision?.offSupported === true);
-				if (!isStructuredEvidence(text)) {
-					throw new LlmError(`vision bridge: ${engine.provider}/${engine.model} 识别结果不是结构化 JSON（strictJson）: ${text.slice(0, 300)}`, 'VISION_CAPTION_NOT_JSON');
+			if (config.captionFormat === 'structured' && config.strictJson) {
+				// 容错提取（围栏/前后缀/多余输出）→ 失败再强化重试一次 → 提取 → 仍失败报错
+				const extracted = extractStructuredJson(text);
+				if (extracted !== null) {
+					text = extracted;
+				} else {
+					const retryPrompt = `${effectivePrompt(engineConfig)}\n\n（注意：必须只输出一个 JSON 对象，不要任何其他文字）`;
+					const retried = await runCaptionOnce(ctx, { ...engineConfig, prompt: retryPrompt }, options, ref, ownerText, vision?.offSupported === true);
+					const extractedRetry = extractStructuredJson(retried);
+					if (extractedRetry !== null) {
+						text = extractedRetry;
+					} else {
+						throw new LlmError(`vision bridge: ${engine.provider}/${engine.model} 识别结果不是结构化 JSON（strictJson）: ${retried.slice(0, 300)}`, 'VISION_CAPTION_NOT_JSON');
+					}
 				}
 			}
 			if (log) log(`识别尝试 ${index + 1}/${chain.length}: ${engine.provider}/${engine.model} 成功（${Date.now() - startedAt}ms）`);
@@ -672,6 +714,25 @@ function apply(ctx, config) {
 			// 只处理主 agent-loop 请求与压缩（compaction）请求；
 			// 内部描述请求与转换后的请求都不带该标记，直接放行。
 			if (!isAgentLoopRequest(options) && options.purpose !== 'compaction') return yield* next();
+			// 原生视觉轮（已路由到 qwen 视觉模型）兼容处理：pi-ai（0.1.0-rc.6）对声明了
+			// reasoning 的视觉模型（如 qwen3.7-flash）默认把 systemPrompt 序列化为
+			// role:'developer'，而 DashScope 兼容端点只接受 system/assistant/user/tool/
+			// function（400 invalid_parameter_error），导致整轮视觉请求失败。这里把系统提示
+			// 并入首条 user 消息：system 文本仍进入模型上下文，且避开 developer 角色。
+			// 仅作用于 vision-bridge 配置的 qwen 模型（含用户手动选择该模型的情形——同样会触发该问题）。
+			if (live.mode === 'native'
+				&& options.provider === live.qwenProvider
+				&& options.model === live.qwenModel
+				&& typeof options.system === 'string' && options.system.length > 0) {
+				return yield* ctx.llm.stream({
+					...options,
+					system: undefined,
+					messages: [
+						{ role: 'user', content: [{ type: 'text', text: options.system }] },
+						...options.messages
+					]
+				});
+			}
 			// contentHasImage 作用于内容块（递归 tool-result）；消息数组需逐条检查。
 			if (!options.messages.some((message) => contentHasImage(message.content))) return yield* next();
 			// 目标模型原生支持图像（例如本轮已路由到 Qwen VL）→ 不做桥接。

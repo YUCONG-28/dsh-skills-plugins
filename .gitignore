@@ -12,3 +12,7 @@ __pycache__/
 
 # Study-review 中间产物
 .cache/
+
+# 本地测试 / 备份产物（不入库）
+.dsh-test/
+.backup-web-profile-*/

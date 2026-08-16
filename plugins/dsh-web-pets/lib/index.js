@@ -33,7 +33,7 @@ import { fileURLToPath } from 'node:url'
 export const name = 'web-pets'
 
 /** 依赖的服务：webServer（HTTP 路由）+ session（会话事件源）。 */
-export const inject = ['webServer', 'session']
+export const inject = ['webServer', 'sessions']
 
 /** 包根目录（lib/index.js → ../）。 */
 const PACKAGE_ROOT = fileURLToPath(new URL('../', import.meta.url))
