@@ -71,7 +71,7 @@ dsh-host-apiproxy 默认在**发送图片**和**切换模型**两个入口按"�
 ### 1. 放宽图像准入（必须）
 
 ```bash
-~/Documents/Deepseek\ Harness/vision-bridge/bin/apply-vision-patch.sh
+bash plugins/dsh-vision-bridge/bin/apply-vision-patch.sh   # 在仓库根目录执行
 # 还原：加 --revert
 ```
 
@@ -82,7 +82,7 @@ dsh-host-apiproxy 默认在**发送图片**和**切换模型**两个入口按"�
 ### 2. 把插件安装进 web profile
 
 ```bash
-dsh plugin --profile web add file:/Users/yucong/Documents/Deepseek Harness/vision-bridge
+dsh plugin --profile web add file:./plugins/dsh-vision-bridge   # 在仓库根目录执行
 ```
 
 ### 3. 在 profile 中启用插件
@@ -232,6 +232,6 @@ dsh web
   `swiftc -O <插件>/scripts/ocr.swift -o ~/.dsh/vision-bridge-ocr`。
 - **路由未生效但兜底在工作**（日志只出现"描述文本"）：确认插件以最新版本加载
   （`dsh plugin --profile web ls` 能看到 dsh-vision-bridge，重启后生效）。
-- **修改插件代码后**：把 `lib/index.js` 同步到
-  `~/.dsh/profiles/web/node_modules/dsh-vision-bridge/lib/index.js`
-  （pnpm file: 安装为硬链接，整文件替换会断开链接）。
+- **修改插件代码后**：在 profile 目录（`~/.dsh/profiles/web`）重新执行
+  `pnpm install` 刷新安装副本（如 pnpm 提示 "Already up to date"，先删除
+  `node_modules/dsh-vision-bridge` 再安装），然后重启 dsh web 生效。

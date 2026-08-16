@@ -53,6 +53,13 @@ bash plugins/dsh-vision-bridge/bin/apply-vision-patch.sh
 
 `SKILL.md` 采用 agent-skills 通用格式，兼容 Claude Code / Codex 等生态；`study-review` 的解析脚本仅依赖 Python 标准库与 Ghostscript（`gs`），跨 macOS / Linux 可用。
 
+## 维护 / 开发
+
+- 本仓库是**规范源（canonical）**：本机 DSH 环境的 `dsh-vision-bridge` 已通过 `file:` 依赖指向 `plugins/dsh-vision-bridge`。
+- 修改插件：直接改本仓库 `plugins/dsh-vision-bridge/`，然后在 profile 目录（`~/.dsh/profiles/web`）执行 `pnpm install` 刷新安装副本（提示 "Already up to date" 时先删除 `node_modules/dsh-vision-bridge` 再装），重启 dsh web 生效。
+- 新增 Skill：复制到 `skills/<name>/`（含 `SKILL.md`）提交即可；本地安装 `cp -R skills/<name> ~/.dsh/skills/`（DSH 自动发现，无需重启）。
+- 注意：`plugins/dsh-vision-bridge` 的打包范围由 `package.json` 的 `files` 字段决定（当前为 `lib` / `README.md` / `scripts` / `bin`）。
+
 ## 第三方插件（仅引用，不复制代码）
 
 本机环境还使用了以下第三方 DSH 插件，版权归其作者所有：
