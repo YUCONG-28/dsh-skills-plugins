@@ -1,0 +1,36 @@
+# dsh-skills-plugins — 本地 Skill 与 Plugin 总览（SUMMARY）
+
+> 本文档汇总本机（macOS，dsh web profile）实际安装的 skills 与 plugins 及其与仓库的关系。
+> 更新日期：2026-08-16
+
+## 一、Skills（`~/.dsh/skills/` 直接放置，非独立 git 仓库）
+
+| Skill | 版本 | 用途 | 仓库位置 | 状态 |
+| --- | --- | --- | --- | --- |
+| `study-review` | — | 课程/资料整理：提炼结构化学习笔记、公式速查、考点梳理 | `skills/study-review/` | 仓库与本地一致 |
+| `markdown-math-writer` | 3.0 | 按目标渲染器（GitHub / MPE / 通用）正确书写 Markdown LaTeX 公式 | `skills/markdown-math-writer/`（本次入库） | 仓库与本地一致 |
+
+## 二、Plugins（web profile 实际启用）
+
+web profile `~/.dsh/profiles/web/package.json` 依赖（`file:` 引用本仓库路径）：
+
+| 插件 | 仓库位置 | 安装副本 | 说明 |
+| --- | --- | --- | --- |
+| `dsh-vision-bridge` | `plugins/dsh-vision-bridge/` | `~/.dsh/profiles/web/node_modules/dsh-vision-bridge` | 自动视觉路由 + 结构化转述 + 本地 OCR（macOS Vision）+ 故障转移；md5 与安装副本一致 |
+| `dsh-web-pets` | `plugins/dsh-web-pets/` | `~/.dsh/profiles/web/node_modules/dsh-web-pets` | Web 桌宠（浏览器内随会话状态换表情），service 依赖 `sessions` |
+| `dsh-desktop-pets` | `projects/desktop-pets/integration/dsh-plugin` | `~/.dsh/profiles/web/node_modules/dsh-desktop-pets` | macOS 桌面宠物插件（DSH 会话事件 → 桌宠状态通道） |
+| `@linxin666/dsh-web-ui-all` | 第三方 npm | `~/.dsh/profiles/web/node_modules/@linxin666/dsh-web-ui-all` | Web UI 全家桶（含 pet 界面入口），非本仓库维护 |
+
+## 三、启用与同步机制
+
+- **Skills**：复制到 `~/.dsh/skills/<name>/` 即被 dsh 识别；本仓库为唯一源，改动后需同步复制。
+- **Plugins**：`~/.dsh/profiles/web/package.json` 用 `file:` 依赖指向本仓库路径（pnpm 安装为硬链接/链接）；**整文件替换会断开硬链接**，改源码后需 `cp` 同步到 `~/.dsh/profiles/web/node_modules/<pkg>/` 并重启 dsh web。
+- **vision-bridge 额外注意**：
+  - `bin/apply-vision-patch.sh` 放宽 dsh-host-apiproxy 图像准入（作用于实际运行的安装副本：homebrew 全局或 npx 缓存）；dsh 重装或 `dsh plugin add` 触发 pnpm 重链后**必须重跑**。
+  - `scripts/ocr.swift` 随插件部署；可用 `swiftc -O ... -o ~/.dsh/vision-bridge-ocr` 预编译加速。
+  - 运行参数可热配置（`~/.dsh/vision-bridge.json`，免重启）。
+
+## 四、当前状态
+
+- git：`main` 分支，与 `origin/main`（github.com/YUCONG-28/dsh-skills-plugins）同步，无未推送提交。
+- 本次变更：新增 `skills/markdown-math-writer/`（与本地安装一致）+ 本文档。

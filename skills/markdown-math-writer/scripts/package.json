@@ -1,0 +1,20 @@
+{
+  "name": "markdown-math-writer-scripts",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Local dependencies for markdown-math-writer validator. Installed only inside this skill directory; never pollutes the global Node/pnpm environment.",
+  "dependencies": {
+    "katex": "^0.16.11",
+    "mathjax-full": "^3.2.2",
+    "rehype-katex": "^7.0.1",
+    "rehype-raw": "^7.0.0",
+    "rehype-stringify": "^10.0.1",
+    "remark": "^15.0.1",
+    "remark-gfm": "^4.0.1",
+    "remark-math": "^6.0.0",
+    "remark-parse": "^11.0.0",
+    "remark-rehype": "^11.1.1",
+    "unified": "^11.0.5"
+  }
+}

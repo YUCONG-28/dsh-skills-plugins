@@ -1,0 +1,306 @@
+[
+  {
+    "id": "01-inline-and-display",
+    "name": "行内公式 + display math",
+    "expect": "pass",
+    "note": "基础分隔符：$...$ 与 $$...$$",
+    "markdown": "Einstein's relation is $E=mc^2$.\n\n$$\nE_k = \\frac{1}{2}mv^2\n$$\n",
+    "target": "mpe"
+  },
+  {
+    "id": "02-maxwell-aligned",
+    "name": "Maxwell 方程组 aligned 多行",
+    "expect": "pass",
+    "note": "aligned 环境、& 对齐、\\\\ 换行、\\mathbf、\\partial",
+    "markdown": "$$\n\\begin{aligned}\n\\nabla \\cdot \\mathbf{E} &= \\frac{\\rho}{\\varepsilon_0}, \\\\\n\\nabla \\cdot \\mathbf{B} &= 0, \\\\\n\\nabla \\times \\mathbf{E} &= -\\frac{\\partial\\mathbf{B}}{\\partial t}.\n\\end{aligned}\n$$\n",
+    "target": "mpe"
+  },
+  {
+    "id": "03-formula-plus-python",
+    "name": "公式 + Python code block",
+    "expect": "pass",
+    "note": "code fence 中的 $ 不误判",
+    "markdown": "The energy is $E=mc^2$.\n\n```python\nprice = \"$10\"\nprint(price)\nprint(os.environ.get(\"HOME\"))\n```\n\n$$\n\\int_0^1 x^2\\,dx = \\frac{1}{3}\n$$\n",
+    "target": "mpe"
+  },
+  {
+    "id": "04-table-inline-math",
+    "name": "Markdown table 中 inline math",
+    "expect": "pass",
+    "note": "表格 cell 只允许单 $",
+    "markdown": "| Quantity | Formula |\n|---|---|\n| Energy | $E=mc^2$ |\n| Plasma frequency | $f_{pe}$ |\n"
+  },
+  {
+    "id": "05a-delimiter-damaged",
+    "name": "修复 delimiter 损坏（损坏输入应报错）",
+    "expect": "fail",
+    "note": "未闭合的 $ 必须被检出",
+    "markdown": "Einstein's relation is $E=mc^2\n"
+  },
+  {
+    "id": "05b-delimiter-fixed",
+    "name": "修复 delimiter 损坏（修复后应通过）",
+    "expect": "pass",
+    "note": "补上闭合 $ 后通过",
+    "markdown": "Einstein's relation is $E=mc^2$.\n"
+  },
+  {
+    "id": "06a-currency-escaped",
+    "name": "货币 \\$10 + 数学公式（正确转义）",
+    "expect": "pass",
+    "note": "\\$10 与 $E=mc^2$ 共存，货币不误判",
+    "markdown": "价格 \\$10，能量 $E=mc^2$。\n"
+  },
+  {
+    "id": "06b-currency-bare",
+    "name": "货币未转义 $10 应报错",
+    "expect": "fail",
+    "note": "裸 $10 必须被检出并要求 \\$10",
+    "markdown": "价格 $10，能量 $E=mc^2$。\n"
+  },
+  {
+    "id": "06c-shell-var-prose",
+    "name": "prose 中 $HOME 不误判",
+    "expect": "pass",
+    "note": "$HOME 是 shell 变量，不是数学",
+    "markdown": "echo $HOME 输出用户主目录。\n"
+  },
+  {
+    "id": "07-complex-math",
+    "name": "矩阵、积分、偏导、求和、极限",
+    "expect": "pass",
+    "note": "pmatrix / bmatrix / \\int / \\partial / \\sum / \\lim",
+    "markdown": "$$\nA =\n\\begin{pmatrix}\na & b \\\\\nc & d\n\\end{pmatrix}\n$$\n\n$$\n\\int_{-\\infty}^{+\\infty} e^{-x^2}\\,dx = \\sqrt{\\pi}\n$$\n\n$$\n\\frac{\\partial f}{\\partial x} = \\lim_{h \\to 0} \\frac{f(x+h)-f(x)}{h} = \\sum_{n=0}^{\\infty} a_n x^n\n$$\n",
+    "target": "mpe"
+  },
+  {
+    "id": "08-single-dollar-display",
+    "name": "单 $ 独占行的 display math 应报错",
+    "expect": "fail",
+    "note": "禁止 $\nE=mc^2\n$ 写法",
+    "markdown": "$\nE = mc^2\n$\n"
+  },
+  {
+    "id": "09-block-math-in-table",
+    "name": "表格 cell 中 $$ 应报错",
+    "expect": "fail",
+    "note": "table cell 禁止块级公式",
+    "markdown": "| a | b |\n|---|---|\n| $$x$$ | $y$ |\n"
+  },
+  {
+    "id": "10-empty-math",
+    "name": "空公式应报错",
+    "expect": "fail",
+    "note": "$ $ 与 $$ $$ 均为空公式",
+    "markdown": "empty inline $ $ and empty display:\n\n$$\n\n$$\n"
+  },
+  {
+    "id": "11-katex-invalid",
+    "name": "明显非法 LaTeX 应报错",
+    "expect": "fail",
+    "note": "KaTeX parse error",
+    "markdown": "$$\n\\frac{1}{2\n$$\n",
+    "target": "mpe"
+  },
+  {
+    "id": "12-code-fence-dollar",
+    "name": "code fence 中 $ 不误判",
+    "expect": "pass",
+    "note": "fence 内全是字面量",
+    "markdown": "```text\n$E=mc^2$ and $HOME and $$10\n```\n\nreal math: $x^2$.\n"
+  },
+  {
+    "id": "13-inline-code-dollar",
+    "name": "inline code 中 $ 不误判",
+    "expect": "pass",
+    "note": "`$HOME` 是代码",
+    "markdown": "Path is `$HOME`, cost is \\$10, and energy is $E=mc^2$.\n"
+  },
+  {
+    "id": "14-cases-and-bmatrix",
+    "name": "cases 与 bmatrix 复杂公式",
+    "expect": "pass",
+    "note": "分段函数与方括号矩阵",
+    "markdown": "$$\nf(x) =\n\\begin{cases}\nx^2, & x \\ge 0, \\\\\n-x^2, & x < 0.\n\\end{cases}\n$$\n\n$$\nB =\n\\begin{bmatrix}\n1 & 0 \\\\\n0 & 1\n\\end{bmatrix}\n$$\n",
+    "target": "mpe"
+  },
+  {
+    "id": "15-malformed-braces",
+    "name": "畸形括号回归：\\frac{x_{i}}{y}} 应报错",
+    "expect": "fail",
+    "note": "Extra close brace or missing open brace 真实模式",
+    "markdown": "$$\n\\frac{x_{i}}{y}}\n$$\n",
+    "target": "mpe"
+  },
+  {
+    "id": "16-nested-subscripts",
+    "name": "嵌套下标回归：x_{{i} 与 x_{i}} 应报错",
+    "expect": "fail",
+    "note": "下标/上标括号错误嵌套（双重花括号与多余闭合）",
+    "markdown": "$$\nx_{{i}\n$$\n\n$$\nx_{i}}\n$$\n",
+    "target": "mpe"
+  },
+  {
+    "id": "17-empty-groups",
+    "name": "空 _{}/^{}/x^{*}_{} 应报错",
+    "expect": "fail",
+    "note": "禁止生成空下标/上标组",
+    "markdown": "$$\nx_{} + y^{*}_{} + z^{}\n$$\n",
+    "target": "mpe"
+  },
+  {
+    "id": "18-consecutive-superscripts",
+    "name": "连续上标 x^{2}^{3} / x^2^3 应报错",
+    "expect": "fail",
+    "note": "一次只能一个上标/下标",
+    "markdown": "$$\nx^{2}^{3} + y^2^3\n$$\n",
+    "target": "mpe"
+  },
+  {
+    "id": "19-orphan-operator",
+    "name": "孤立二元运算符（丢项）-\\ 应报错",
+    "expect": "fail",
+    "note": "真实回归：\\exp 项丢失后的 '-\\' 残迹（KaTeX 语法上可通过）",
+    "markdown": "$$\nA\\cos(k_xx)\n\\left[\n\\exp\\left(-\\frac{(y-y_1)^2}{w^2}\\right)\n-\\\n\\right].\n$$\n",
+    "target": "mpe"
+  },
+  {
+    "id": "20-tag-in-aligned",
+    "name": "\\tag 位于 aligned 内部应报错",
+    "expect": "fail",
+    "note": "KaTeX/GitHub 报 'tag not allowed in aligned environment'",
+    "markdown": "$$\n\\begin{aligned}\nx &= 1 \\\\\ny &= 2. \\tag{1}\n\\end{aligned}\n$$\n",
+    "target": "mpe"
+  },
+  {
+    "id": "21-paren-delimiters",
+    "name": "\\(...\\) 分隔符应报错（GitHub 不渲染）",
+    "expect": "fail",
+    "note": "GitHub 只支持 $...$ / $$...$$",
+    "markdown": "式中，\\(t_k\\) 为中心时刻。\n"
+  },
+  {
+    "id": "22-boldsymbol",
+    "name": "\\boldsymbol 归一化公式",
+    "expect": "pass",
+    "note": "boldsymbol 在 KaTeX 与 MathJax 均验证",
+    "markdown": "$$\n\\boldsymbol{x}^{*}\n=\n\\frac{\\boldsymbol{x}}{L_0},\n\\qquad\n\\boldsymbol{B}^{*}\n=\n\\frac{\\boldsymbol{B}}{B_0}\n$$\n",
+    "target": "mpe"
+  },
+  {
+    "id": "23-complex-normalization",
+    "name": "复杂归一化：f_k - f_{III}(t_k) / W_onset",
+    "expect": "pass",
+    "note": "真实科研公式（spike topping 判据）",
+    "markdown": "$$\n\\frac{f_k - f_{\\mathrm{III}}(t_k)}{W_{\\mathrm{onset}}}\n\\qquad\n\\left| f_k - f_{\\mathrm{III}}(t_k) \\right| \\le W_{\\mathrm{onset}}\n$$\n",
+    "target": "mpe"
+  },
+  {
+    "id": "24-aligned-equations",
+    "name": "aligned 多行方程 + 合法 \\tag",
+    "expect": "pass",
+    "note": "\\tag 在 \\end{aligned} 之后合法",
+    "markdown": "$$\n\\begin{aligned}\n\\nabla \\cdot \\mathbf{E} &= \\frac{\\rho}{\\varepsilon_0}, \\\\\n\\nabla \\cdot \\mathbf{B} &= 0.\n\\end{aligned}\n\\tag{7.1}\n$$\n",
+    "target": "mpe"
+  },
+  {
+    "id": "25-math-fence",
+    "name": "GitHub math fence ```math 公式",
+    "expect": "pass",
+    "note": "math fence 内容按 display math 验证",
+    "markdown": "```math\n\\omega_{pe} = \\sqrt{\\frac{n_e e^2}{\\varepsilon_0 m_e}}\n```\n"
+  },
+  {
+    "id": "26-unclosed-math-fence",
+    "name": "未闭合 ```math fence 应报错",
+    "expect": "fail",
+    "note": "math fence 未闭合",
+    "markdown": "```math\nx = 1\n"
+  },
+  {
+    "id": "27-chinese-in-text",
+    "name": "公式 \\text{} 内中文（warning 级，不阻断）",
+    "expect": "pass",
+    "note": "warning 提示，PASS 但带警告",
+    "markdown": "$$\n\\tau_J = \\inf \\{ \\tau: q_J(\\tau) \\ge \\theta_J \\ \\text{且连续保持至少 }m\\text{ 个快照} \\}\n$$\n",
+    "target": "mpe"
+  },
+  {
+    "id": "28-math-in-list",
+    "name": "display math 位于列表项内应报错（GitHub block boundary）",
+    "expect": "fail",
+    "note": "GitHub 无法可靠渲染列表中的 $$ 块",
+    "markdown": "- 公式如下：\n\n  $$\n  E = mc^2\n  $$\n\n- 下一项\n"
+  },
+  {
+    "id": "29-math-in-blockquote",
+    "name": "display math 位于 blockquote 内应报错",
+    "expect": "fail",
+    "note": "GitHub 无法可靠渲染引用块中的 $$ 块",
+    "markdown": "> 推导：\n>\n> $$\n> E = mc^2\n> $$\n"
+  },
+  {
+    "id": "30-half-open-interval",
+    "name": "半开区间 [a,b) / (a,b] 不误报",
+    "expect": "pass",
+    "note": "合法数学记号",
+    "markdown": "$$\nx \\in [-L_x/2, L_x/2), \\qquad y \\in (a, b], \\qquad \\Omega = [0,1) \\cup (2,3]\n$$\n",
+    "target": "mpe"
+  },
+  {
+    "id": "31-rowsep-bracket-arg",
+    "name": "\\\\[6pt] 可选参数不误报",
+    "expect": "pass",
+    "note": "cases 中换行加距参数",
+    "markdown": "$$\n\\begin{cases}\n\\frac{u}{b}+c\\left[\\ln b+\\ln\\left(1+\\frac{a}{b}e^{-u}\\right)\\right], & u\\ge0,\\\\[6pt]\n\\frac{u}{a}+c\\left[\\ln a+\\ln\\left(1+\\frac{b}{a}e^u\\right)\\right], & u<0.\n\\end{cases}\n$$\n",
+    "target": "mpe"
+  },
+  {
+    "id": "32-github-math-regression",
+    "name": "通用数学回归样例（$$ 方言，mpe 目标）",
+    "expect": "pass",
+    "note": "该文件为 $$ 方言回归；v3 的 GitHub 回归见 github-safe.md 与 github_visual_smoke.md",
+    "file": "github_math_regression.md",
+    "target": "mpe"
+  },
+  {
+    "id": "33-github-safe-dialect",
+    "name": "GitHub-safe 方言文件",
+    "expect": "pass",
+    "target": "github",
+    "note": "0 tag / 0 $$ block / 0 aligned / 0 equation env / math fence 全块",
+    "file": "github-safe.md"
+  },
+  {
+    "id": "34-mpe-dialect",
+    "name": "MPE 方言文件",
+    "expect": "pass",
+    "target": "mpe",
+    "note": "$$ block + aligned + \\tag（环境外）在 mpe 目标下合法",
+    "file": "mpe-safe.md"
+  },
+  {
+    "id": "35-generic-dialect",
+    "name": "Generic 方言文件",
+    "expect": "pass",
+    "target": "generic",
+    "note": "$$ block + aligned 在 generic 目标下合法",
+    "file": "generic-safe.md"
+  },
+  {
+    "id": "36-github-visual-smoke",
+    "name": "GitHub 视觉 smoke fixture",
+    "expect": "pass",
+    "target": "github",
+    "note": "github_visual_smoke.md：编号+math fence+中文+table+python+bash+货币+矩阵+积分+导数+上下标",
+    "file": "github_visual_smoke.md"
+  },
+  {
+    "id": "37-dialect-mismatch",
+    "name": "方言错配应失败：MPE 文件在 github 目标下报错",
+    "expect": "fail",
+    "target": "github",
+    "note": "$$ block / aligned / \\tag 在 github 目标必须 FAIL",
+    "file": "mpe-safe.md"
+  }
+]
