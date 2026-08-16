@@ -61,7 +61,7 @@ dsh plugin --profile web add link:$(pwd)/plugins/dsh-web-pets
 # 方式二：file: 依赖 + 手工在 profile 的 cordis.patch.yml 加 insert 行（id: web-pets）
 ```
 
-安装后重启 `dsh web`，刷新页面右下角出现桌宠（内置 demo / remiel），右键可切换宠物、调整大小、隐藏；**设置 → Web UI 插件**组里出现「桌宠」设置卡片（与上游 dsh-pet 同一宠物入口槽位），可在卡片内选择宠物 / 调大小 / 显隐。替换/新增宠物形象：往 `plugins/dsh-web-pets/assets/pets/<名字>/` 放 `pet.json` + `emotes/` 即可（详见插件 README）。
+安装后重启 `dsh web`。**并入 dsh-web-ui 的宠物入口**：先装 dsh-web-ui（含鲸鱼宠物 dsh-pet）再装本插件，设置 → Web UI 插件 → 宠物区域出现「宠物选择」卡片，可在鲸鱼娘（上游）/ 豆豆 / 雷米埃尔 / 自定义宠物间切换，**任意时刻只显示一只宠物**；仅装本插件时则是一只独立悬浮宠（右下角）+ 右键菜单切换/调大小/隐藏。替换/新增宠物形象：往 `plugins/dsh-web-pets/assets/pets/<名字>/` 放 `pet.json` + `emotes/` 即可（详见插件 README）。
 
 ### 项目：desktop-pets（macOS 原生多桌宠）
 

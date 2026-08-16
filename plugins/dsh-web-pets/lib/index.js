@@ -71,6 +71,8 @@ let petState = {
   activePet: DEFAULT_PET,
   visible: true,
   size: 160,
+  /** 主开关：false 时客户端完全不渲染（无悬浮宠、无召唤按钮）。 */
+  enabled: true,
   updatedAt: Date.now(),
 }
 
@@ -78,12 +80,19 @@ let petState = {
 let successTimer
 let feedbackTimer
 
+/** enabled 是否被显式配置过（决定客户端首次加载是否自动让位于上游宠物）。 */
+let enabledConfigured = false
+
 /** 读取持久化配置（缺失/损坏回退默认，任何情况不抛错）。 */
 function loadConfig() {
   try {
     const cfg = JSON.parse(readFileSync(CONFIG_PATH, 'utf8'))
     if (cfg && typeof cfg === 'object') {
       if (cfg.visible === false) petState.visible = false
+      if (cfg.enabled === false || cfg.enabled === true) {
+        petState.enabled = cfg.enabled
+        enabledConfigured = true
+      }
       if (typeof cfg.size === 'number' && cfg.size > 0) petState.size = cfg.size
       if (typeof cfg.activePet === 'string' && cfg.activePet !== '') {
         petState.activePet = cfg.activePet
@@ -97,8 +106,10 @@ function loadConfig() {
 /** 持久化配置（原子写）。 */
 function saveConfig() {
   try {
+    enabledConfigured = true
     writeFileSync(CONFIG_PATH, JSON.stringify({
       visible: petState.visible,
+      enabled: petState.enabled,
       size: petState.size,
       activePet: petState.activePet,
     }, null, 2), 'utf8')
@@ -323,9 +334,34 @@ function makeRoutes() {
           activePet: petState.activePet,
           pets: listPets(),
           visible: petState.visible,
+          enabled: petState.enabled,
+          enabledConfigured,
           size: petState.size,
           updatedAt: petState.updatedAt,
         })
+      },
+    },
+    {
+      kind: 'exact',
+      path: `${API_PREFIX}/set-enabled`,
+      handler: async (req, res) => {
+        if (!requireMethod(req, res, 'POST')) return
+        try {
+          const body = await readJsonBody(req)
+          if (typeof body.enabled !== 'boolean') {
+            json(res, 400, { ok: false, error: 'invalid-enabled' })
+            return
+          }
+          petState.enabled = body.enabled
+          petState.updatedAt = Date.now()
+          saveConfig()
+          json(res, 200, { ok: true, enabled: petState.enabled })
+        } catch (error) {
+          json(res, 400, {
+            ok: false,
+            error: error instanceof Error ? error.message : String(error),
+          })
+        }
       },
     },
     {
