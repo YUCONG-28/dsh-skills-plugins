@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>豆豆 · 演示桌宠</title>
+<style>
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 22px;
+    background:
+      radial-gradient(ellipse at 50% 0%, rgba(176, 124, 232, 0.20), transparent 55%),
+      linear-gradient(180deg, #14121f, #241b33);
+    color: #f0e6f5;
+    font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  }
+  img {
+    width: 200px;
+    height: 200px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+  }
+  h1 { font-size: 24px; letter-spacing: 4px; margin: 0; }
+  p { font-size: 13px; color: #a99cb8; margin: 0; }
+</style>
+</head>
+<body>
+  <img src="emotes/demo_1.gif" alt="豆豆">
+  <h1>豆豆 · 演示桌宠</h1>
+  <p>本页表情由 scripts/generate_demo_emotes.py 用 PIL 程序生成（P3 演示）</p>
+</body>
+</html>

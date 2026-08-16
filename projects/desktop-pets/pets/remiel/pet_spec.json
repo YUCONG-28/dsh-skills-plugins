@@ -1,0 +1,13 @@
+{
+  "name": "remiel",
+  "display_name": "雷米埃尔",
+  "emotes_dir": "emotes",
+  "html": "pet.html",
+  "state_file": "/tmp/remiel-pet.state",
+  "bubble_file": "/tmp/remiel-pet.bubble",
+  "config_file": ".pet-config.json",
+  "lock_file": ".pet.lock",
+  "status_icon": "emotes/remiel_1.gif",
+  "emote_map": {"idle": 1, "thinking": 2, "waiting": 3, "running": 4, "success": 5},
+  "defaults": {"width": 190, "min_width": 95, "max_width": 305, "step_ratio": 1.15, "bubbles": 5, "lifetime": 6, "side": "right", "bubble_border_w": 0, "bubble_border_color": "#c9b8d0", "bubble_font_size": 12, "bubble_text_color": "#3a2b3f", "bubble_bg_color": "#ffffff", "bubble_bg_alpha": 92, "bubble_gap": 2, "bubble_shape": "rect"}
+}

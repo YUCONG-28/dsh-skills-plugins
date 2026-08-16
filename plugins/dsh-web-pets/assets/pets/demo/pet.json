@@ -1,0 +1,12 @@
+{
+  "name": "demo",
+  "display_name": "豆豆",
+  "description": "程序生成的演示桌宠",
+  "emotes": {
+    "idle": "demo_1.gif",
+    "thinking": "demo_2.gif",
+    "waiting": "demo_3.gif",
+    "running": "demo_4.gif",
+    "success": "demo_5.gif"
+  }
+}

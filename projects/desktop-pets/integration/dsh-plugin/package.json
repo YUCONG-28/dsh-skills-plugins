@@ -1,0 +1,17 @@
+{
+  "name": "dsh-desktop-pets",
+  "version": "0.1.0",
+  "description": "DeepSeek Harness plugin: bridge DSH session events to the desktop-pets state/bubble channels, so the macOS desktop pet reacts to DSH agent activity.",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js"
+  },
+  "files": [
+    "lib"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@deepseek-ai/dsh-session": "^0.1.0-rc.6"
+  }
+}

@@ -1,0 +1,18 @@
+# 运行时文件（不入库）
+.venv/
+pet.log
+petctl.log
+.remiel-pet-config.json
+.remiel-pet.lock
+pets/*/.pet-config.json
+pets/*/.pet.lock
+pets/*/pet.log
+
+# 系统与缓存
+.DS_Store
+__pycache__/
+*.pyc
+*.tmp
+
+# 互动账本（不入库）
+pets/*/.pet-profile.json

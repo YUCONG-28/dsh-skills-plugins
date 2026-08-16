@@ -1,0 +1,12 @@
+{
+  "name": "remiel",
+  "display_name": "雷米埃尔",
+  "description": "内置桌宠",
+  "emotes": {
+    "idle": "remiel_1.gif",
+    "thinking": "remiel_2.gif",
+    "waiting": "remiel_3.gif",
+    "running": "remiel_4.gif",
+    "success": "remiel_5.gif"
+  }
+}

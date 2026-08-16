@@ -1,0 +1,10 @@
+{
+  "_说明": "这是权限白名单示例,不是完整配置。原机器的完整白名单含代理密码等敏感信息,未随包提供。每条规则的含义见《说明书.md》第九节。",
+  "permissions": {
+    "allow": [
+      "Bash(python3 *)",
+      "Bash(pkill -f remiel-pet-desktop.py)",
+      "Bash(jq *)"
+    ]
+  }
+}

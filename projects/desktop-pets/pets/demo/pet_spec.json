@@ -1,0 +1,13 @@
+{
+  "name": "demo",
+  "display_name": "豆豆·演示",
+  "emotes_dir": "emotes",
+  "html": "pet.html",
+  "state_file": "/tmp/demo-pet.state",
+  "bubble_file": "/tmp/demo-pet.bubble",
+  "config_file": ".pet-config.json",
+  "lock_file": ".pet.lock",
+  "status_icon": "emotes/demo_1.gif",
+  "emote_map": {"idle": 1, "thinking": 2, "waiting": 3, "running": 4, "success": 5},
+  "defaults": {"width": 120, "min_width": 80, "max_width": 240, "step_ratio": 1.15, "bubbles": 3, "lifetime": 5, "side": "left", "bubble_border_w": 1, "bubble_border_color": "#b07ce8", "bubble_font_size": 13, "bubble_text_color": "#4a2b5f", "bubble_bg_color": "#fdf6ff", "bubble_bg_alpha": 88, "bubble_gap": 3, "bubble_shape": "cloud"}
+}

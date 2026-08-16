@@ -1,0 +1,77 @@
+{
+  "theme": "dark",
+  "model": "deepseek-v4-flash",
+  "autoCompactEnabled": true,
+  "precomputeCompactionEnabled": true,
+  "env": {
+    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "80"
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo idle > /tmp/remiel-pet.state; : > /tmp/remiel-pet.bubble",
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "python3 __PET_DIR__/remiel-pet-desktop.py >/dev/null 2>&1 || true",
+            "async": true,
+            "statusMessage": "雷米埃尔正在呼唤你…"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo thinking > /tmp/remiel-pet.state; echo \"think|\" > /tmp/remiel-pet.bubble",
+            "async": true
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo running > /tmp/remiel-pet.state; jq -r '\"run|\" + (.tool_name // \"\") + \"|\" + ((.tool_input.command // .tool_input.file_path // \"\")|gsub(\"[\\n\\r]+\"; \" \"))' | cut -c1-90 > /tmp/remiel-pet.bubble",
+            "async": true
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r 'if .tool_name == \"Bash\" then \"done|Bash|\" + ((.tool_response.exit_code // 0)|tostring) else \"done|\" + (.tool_name // \"\") + \"|ok\" end' > /tmp/remiel-pet.bubble",
+            "async": true
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo success > /tmp/remiel-pet.state; echo \"finish|\" > /tmp/remiel-pet.bubble",
+            "async": true
+          }
+        ]
+      }
+    ]
+  }
+}

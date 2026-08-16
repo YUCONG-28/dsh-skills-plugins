@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>雷米埃尔 · 电子宠物</title>
+<style>
+  :root {
+    --pink: #f2a7c3;
+    --pink-dark: #d96b9d;
+    --gold: #ffd34d;
+    --bg1: #14121f;
+    --bg2: #241b33;
+    --panel: rgba(30, 24, 48, 0.72);
+    --text: #f0e6f5;
+    --text-dim: #a99cb8;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    min-height: 100vh;
+    font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+    background:
+      radial-gradient(ellipse at 50% 0%, rgba(217, 107, 157, 0.22), transparent 55%),
+      radial-gradient(ellipse at 85% 90%, rgba(120, 90, 200, 0.18), transparent 50%),
+      linear-gradient(180deg, var(--bg1), var(--bg2));
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+  }
+  /* 星空背景 */
+  .stars { position: absolute; inset: 0; pointer-events: none; }
+  .stars span {
+    position: absolute;
+    width: 3px; height: 3px;
+    background: #fff;
+    border-radius: 50%;
+    opacity: 0.7;
+    animation: twinkle 3s ease-in-out infinite;
+  }
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.15; transform: scale(0.7); }
+    50% { opacity: 0.9; transform: scale(1.15); }
+  }
+
+  .scene {
+    position: relative;
+    width: min(420px, 94vw);
+    background: var(--panel);
+    border: 1px solid rgba(242, 167, 195, 0.25);
+    border-radius: 24px;
+    padding: 18px 20px 22px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 18px 60px rgba(0, 0, 0, 0.55), inset 0 0 60px rgba(242, 167, 195, 0.05);
+    animation: rise 0.6s ease-out;
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(24px) scale(0.97); }
+    to { opacity: 1; transform: none; }
+  }
+
+  .header { text-align: center; margin-bottom: 4px; }
+  .header h1 {
+    font-size: 22px;
+    letter-spacing: 2px;
+    background: linear-gradient(90deg, var(--pink), #fff, var(--pink));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 800;
+  }
+  .header .sub {
+    font-size: 11.5px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    margin-top: 2px;
+  }
+
+  /* 宠物舞台 */
+  .stage {
+    position: relative;
+    height: 330px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .pet {
+    position: relative;
+    animation: bob 3.2s ease-in-out infinite;
+    cursor: pointer;
+  }
+  .pet img {
+    display: block;
+    width: 228px;
+    height: auto;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.04);
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(242, 167, 195, 0.12);
+    transition: filter 0.3s;
+  }
+  @keyframes bob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-9px); }
+  }
+  .pet.anim-eat { animation: eatAnim 1s ease-in-out; }
+  @keyframes eatAnim {
+    0%, 100% { transform: translateY(0) scale(1); }
+    40% { transform: translateY(-6px) rotate(-4deg) scale(1.06); }
+    70% { transform: translateY(2px) rotate(3deg); }
+  }
+  .pet.anim-dance { animation: danceAnim 1.4s ease-in-out; }
+  @keyframes danceAnim {
+    0%, 100% { transform: translateY(0) rotate(0); }
+    20% { transform: translateY(-14px) rotate(-7deg); }
+    45% { transform: translateY(-6px) rotate(6deg); }
+    70% { transform: translateY(-14px) rotate(-5deg); }
+    85% { transform: translateY(-4px) rotate(3deg); }
+  }
+  .pet.anim-bath { animation: bathAnim 1.2s ease-in-out; }
+  @keyframes bathAnim {
+    0%, 100% { transform: translateY(0) rotate(0); }
+    30% { transform: translateY(-10px) rotate(-8deg); }
+    60% { transform: translateY(-12px) rotate(8deg); }
+  }
+  .pet.anim-sleep { animation: sleepTilt 2.6s ease-in-out infinite; }
+  @keyframes sleepTilt {
+    0%, 100% { transform: translateY(2px) rotate(-3deg); }
+    50% { transform: translateY(-2px) rotate(-7deg); }
+  }
+
+  /* 对话气泡 */
+  .bubble {
+    position: absolute;
+    left: 50%;
+    bottom: 108%;
+    transform: translateX(-50%);
+    background: #fff;
+    color: #3a2b3f;
+    font-size: 13px;
+    padding: 8px 14px;
+    border-radius: 14px 14px 14px 4px;
+    max-width: 240px;
+    white-space: nowrap;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s, transform 0.25s;
+    transform: translateX(-50%) translateY(6px) scale(0.9);
+    z-index: 5;
+  }
+  .bubble.show { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+  .bubble::after {
+    content: "";
+    position: absolute;
+    bottom: -10px; left: 18px;
+    border: 6px solid transparent;
+    border-top-color: #fff;
+    border-bottom: 0;
+  }
+
+  /* 漂浮文字效果 */
+  #fx { position: absolute; inset: 0; pointer-events: none; z-index: 4; }
+  .fx-item {
+    position: absolute;
+    font-size: 22px;
+    animation: floatUp 1.5s ease-out forwards;
+  }
+  @keyframes floatUp {
+    from { opacity: 1; transform: translateY(0) scale(0.8); }
+    to { opacity: 0; transform: translateY(-70px) scale(1.25); }
+  }
+
+  .zzz {
+    position: absolute;
+    top: 4%;
+    right: 10%;
+    font-size: 26px;
+    font-weight: 900;
+    color: #cfa6ff;
+    opacity: 0;
+    pointer-events: none;
+    text-shadow: 0 0 12px rgba(207, 166, 255, 0.8);
+  }
+  .zzz.show { animation: zzzFloat 2.2s ease-in-out infinite; opacity: 1; }
+  @keyframes zzzFloat {
+    0% { transform: translateY(0) rotate(-8deg); opacity: 0.2; }
+    50% { transform: translateY(-14px) rotate(6deg); opacity: 1; }
+    100% { transform: translateY(-26px) rotate(-4deg); opacity: 0.3; }
+  }
+
+  /* 状态条 */
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 18px; margin: 10px 0 14px; }
+  .stat { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-dim); }
+  .stat .icon { font-size: 15px; }
+  .stat .name { width: 34px; }
+  .bar {
+    flex: 1;
+    height: 9px;
+    background: rgba(255, 255, 255, 0.09);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .bar i {
+    display: block;
+    height: 100%;
+    width: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, #7ae0a0, #b3f0c9);
+    transition: width 0.45s ease, background 0.45s ease;
+  }
+  .bar i.mid { background: linear-gradient(90deg, #f0c36b, #f7dda0); }
+  .bar i.low { background: linear-gradient(90deg, #ef6b6b, #f7a0a0); }
+  .stat .val { width: 34px; text-align: right; color: var(--text); }
+
+  /* 按钮 */
+  .actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .btn {
+    appearance: none;
+    border: 1px solid rgba(242, 167, 195, 0.35);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text);
+    border-radius: 14px;
+    padding: 10px 4px 9px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: transform 0.12s, background 0.2s, border-color 0.2s;
+    user-select: none;
+  }
+  .btn .ico { font-size: 22px; display: block; margin-bottom: 3px; }
+  .btn:hover { background: rgba(242, 167, 195, 0.16); border-color: var(--pink); transform: translateY(-2px); }
+  .btn:active { transform: scale(0.94); }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+  .foot {
+    margin-top: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+  .foot button {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 11.5px;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+  .foot button:hover { color: var(--pink); }
+  .credit { margin-top: 6px; font-size: 10px; color: var(--text-dim); opacity: 0.75; text-align: center; }
+</style>
+</head>
+<body>
+<div class="stars" id="stars"></div>
+
+<div class="scene">
+  <div class="header">
+    <h1>雷米埃尔</h1>
+    <div class="sub">绝区零 · 初代虚狩 · 电子宠物</div>
+  </div>
+
+  <div class="stage">
+    <div class="bubble" id="bubble"></div>
+    <div id="fx"></div>
+    <div class="zzz" id="zzz">💤 Zzz</div>
+
+    <div class="pet" id="pet">
+      <img id="petImg" src="remiel-emotes/remiel_1.gif" alt="Q版雷米埃尔">
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><span class="icon">🍗</span><span class="name">饱食</span><div class="bar"><i id="bar-full"></i></div><span class="val" id="val-full">100</span></div>
+    <div class="stat"><span class="icon">💕</span><span class="name">心情</span><div class="bar"><i id="bar-mood"></i></div><span class="val" id="val-mood">100</span></div>
+    <div class="stat"><span class="icon">⚡</span><span class="name">精力</span><div class="bar"><i id="bar-energy"></i></div><span class="val" id="val-energy">100</span></div>
+    <div class="stat"><span class="icon">🫧</span><span class="name">清洁</span><div class="bar"><i id="bar-clean"></i></div><span class="val" id="val-clean">100</span></div>
+  </div>
+
+  <div class="actions">
+    <button class="btn" id="btn-feed"><span class="ico">🍖</span>喂食 <kbd style="opacity:.5;font-size:10px">1</kbd></button>
+    <button class="btn" id="btn-play"><span class="ico">💃</span>共舞 <kbd style="opacity:.5;font-size:10px">2</kbd></button>
+    <button class="btn" id="btn-sleep"><span class="ico">😴</span>睡觉 <kbd style="opacity:.5;font-size:10px">3</kbd></button>
+    <button class="btn" id="btn-bath"><span class="ico">🫧</span>洗澡 <kbd style="opacity:.5;font-size:10px">4</kbd></button>
+  </div>
+
+  <div class="foot">
+    <span id="ageText">第 1 天 · 和你的初见</span>
+    <button id="btn-reset">重新养育</button>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  const LS_KEY = "remiel_pet_v1";
+  const PET_BORN_KEY = "remiel_pet_born";
+
+  /* ---------- 表情映射 ----------
+     表情内容（作者原帖顺序）：
+       1 = 待机
+       2 = 思考             → 喂食
+       3 = 停下观察所绘图像  → 共舞
+       4 = 绘画             → 睡觉
+       5 = 成功/欣赏作品     → 洗澡
+     想换对应动作，改 EMOTES 里的数字即可。 */
+  const EMOTES = { idle: 1, feed: 2, play: 3, sleep: 4, bath: 5 };
+  const EMOTE_PATH = (n) => `remiel-emotes/remiel_${n}.gif`;
+
+  /* ---------- 状态 ---------- */
+  const def = () => ({ fullness: 100, mood: 100, energy: 100, clean: 100, last: Date.now() });
+  let state = (() => {
+    try {
+      const s = JSON.parse(localStorage.getItem(LS_KEY));
+      if (s && typeof s.fullness === "number") return s;
+    } catch (e) {}
+    return def();
+  })();
+
+  // 年龄
+  let born = parseInt(localStorage.getItem(PET_BORN_KEY) || "0", 10);
+  if (!born) { born = Date.now(); localStorage.setItem(PET_BORN_KEY, born); }
+
+  const save = () => localStorage.setItem(LS_KEY, JSON.stringify(state));
+  const clamp = (v) => Math.max(0, Math.min(100, v));
+
+  const decay = () => {
+    const now = Date.now();
+    const dt = Math.max(0, now - state.last); // 毫秒
+    state.last = now;
+    const H = 3600000;
+    state.fullness = clamp(state.fullness - dt / (10 * 60000)); // 每10分钟 -1
+    state.mood     = clamp(state.mood     - dt / (15 * 60000)); // 每15分钟 -1
+    state.clean    = clamp(state.clean    - dt / (30 * 60000)); // 每30分钟 -1
+    state.energy   = clamp(state.energy   - dt / (12 * 60000)); // 每12分钟 -1
+  };
+
+  /* ---------- 元素 ---------- */
+  const $ = (id) => document.getElementById(id);
+  const petEl = $("pet"), petImg = $("petImg"), bubble = $("bubble"), fx = $("fx"), zzzEl = $("zzz");
+  const bars = { fullness: $("bar-full"), mood: $("bar-mood"), energy: $("bar-energy"), clean: $("bar-clean") };
+  const vals = { fullness: $("val-full"), mood: $("val-mood"), energy: $("val-energy"), clean: $("val-clean") };
+
+  /* 预加载全部表情图 */
+  [1, 2, 3, 4, 5].forEach((n) => { const im = new Image(); im.src = EMOTE_PATH(n); });
+
+  /* ---------- 音效（WebAudio，无需文件） ---------- */
+  let actx = null;
+  function tone(freq, dur, { type = "sine", vol = 0.14, delay = 0 } = {}) {
+    try {
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      if (actx.state === "suspended") actx.resume();
+      const t0 = actx.currentTime + delay;
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = type; o.frequency.value = freq;
+      g.gain.setValueAtTime(0, t0);
+      g.gain.linearRampToValueAtTime(vol, t0 + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      o.connect(g); g.connect(actx.destination);
+      o.start(t0); o.stop(t0 + dur + 0.05);
+    } catch (e) { /* 无声也不影响 */ }
+  }
+  const sndFeed  = () => { tone(660, 0.15); tone(880, 0.22, { delay: 0.12 }); };
+  const sndPlay  = () => [523, 659, 784, 1046].forEach((f, i) => tone(f, 0.18, { type: "triangle", delay: i * 0.09 }));
+  const sndBath  = () => { tone(330, 0.3, { type: "triangle", vol: 0.1 }); tone(392, 0.35, { type: "triangle", delay: 0.18, vol: 0.1 }); };
+  const sndSleep = () => { tone(262, 1.2, { type: "sine", vol: 0.08 }); tone(330, 1.4, { type: "sine", vol: 0.06, delay: 0.25 }); };
+
+  /* ---------- 台词 ---------- */
+  const LINES = {
+    idle: [
+      "今晚的舞会，要一起吗？",
+      "我的翅膀，只为信任之人展开。",
+      "嘘……这是我们的秘密。",
+      "灰羽与白翼，皆是真实的我。",
+      "塔乌弥尔记得的，是百年前的风。",
+      "这空洞之外，竟然也有这样安静的时刻。",
+      "别担心，我比看起来要……结实得多。",
+    ],
+    feed: ["多谢款待。", "味道很好……和记忆里的一样。", "再这样下去，我会被你宠坏的。"],
+    play: ["你的舞步，还不赖嘛。", "转一圈！", "呵呵，我的节拍可不好跟哦。"],
+    sleep: ["小憩片刻……", "梦里也会有空洞吗？", "Zzz……"],
+    bath: ["泡沫……还挺舒服的。", "羽毛打湿了，有点重。", "洗完之后，请再夸我一句漂亮。"],
+    hungry: ["肚子……有点空。", "那顿晚餐，什么时候能来？", "有吃的吗？"],
+    dirty: ["我觉得自己该洗洗了。", "羽毛上沾了灰……"],
+    sleepy: ["眼皮，有点沉……", "让我靠一会儿……"],
+    sad: ["……我还不能倒下。", "风好像有点冷。"],
+    wake: ["嗯？我醒着，只是闭着眼。"],
+  };
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+  let bubbleTimer = null;
+  function say(text, ms = 2600) {
+    bubble.textContent = text;
+    bubble.classList.add("show");
+    clearTimeout(bubbleTimer);
+    bubbleTimer = setTimeout(() => bubble.classList.remove("show"), ms);
+  }
+
+  /* ---------- 粒子 ---------- */
+  function spawnFX(emoji, n = 6, spread = 46) {
+    for (let i = 0; i < n; i++) {
+      const el = document.createElement("div");
+      el.className = "fx-item";
+      el.textContent = emoji;
+      el.style.left = (120 + (Math.random() - 0.5) * spread) + "px";
+      el.style.top = (150 + Math.random() * 60) + "px";
+      el.style.animationDelay = (Math.random() * 0.3) + "s";
+      fx.appendChild(el);
+      el.addEventListener("animationend", () => el.remove());
+    }
+  }
+
+  /* ---------- 表情与状态 ---------- */
+  let sleeping = false, sleepEnd = 0, busy = false;
+
+  function showEmote(key) {
+    petImg.src = EMOTE_PATH(EMOTES[key] || EMOTES.idle);
+  }
+
+  function updateBars() {
+    const conf = (v) => (v > 60 ? "" : v > 30 ? "mid" : "low");
+    for (const k of Object.keys(bars)) {
+      bars[k].style.width = Math.round(state[k]) + "%";
+      bars[k].className = conf(state[k]);
+      vals[k].textContent = Math.round(state[k]);
+    }
+    const days = Math.floor((Date.now() - born) / 86400000) + 1;
+    $("ageText").textContent = `第 ${days} 天` + (days === 1 ? " · 和你的初见" : "");
+  }
+
+  function lowStatusWarning() {
+    if (state.fullness < 15 && Math.random() < 0.5) { say(pick(LINES.hungry), 2200); return; }
+    if (state.clean < 15 && Math.random() < 0.5) { say(pick(LINES.dirty), 2200); return; }
+    if (state.energy < 10 && Math.random() < 0.5) { say(pick(LINES.sleepy), 2200); return; }
+    if (state.fullness + state.mood + state.energy + state.clean < 60) say(pick(LINES.sad), 2200);
+  }
+
+  /* ---------- 动作 ---------- */
+  function act(name, effects, anim, snd, lineSet, fxEmoji) {
+    if (busy && name !== "sleep") return;
+    wakeIfNeeded(name);
+    for (const k of Object.keys(effects)) state[k] = clamp(state[k] + effects[k]);
+    save();
+    busy = true;
+    petEl.classList.remove("anim-eat", "anim-dance", "anim-bath", "anim-sleep");
+    petEl.classList.add(anim);
+    showEmote(name);
+    snd();
+    say(pick(lineSet));
+    if (fxEmoji) spawnFX(fxEmoji);
+    updateBars();
+    setTimeout(() => {
+      petEl.classList.remove("anim-eat", "anim-dance", "anim-bath");
+      if (sleeping) { petEl.classList.add("anim-sleep"); showEmote("sleep"); }
+      else showEmote("idle");
+      busy = false;
+    }, 1400);
+  }
+
+  function wakeIfNeeded(name) {
+    if (sleeping && name !== "sleep") {
+      sleeping = false;
+      zzzEl.classList.remove("show");
+      petEl.classList.remove("anim-sleep");
+      showEmote("idle");
+      say(pick(LINES.wake), 1800);
+    }
+  }
+
+  $("btn-feed").addEventListener("click", () => act("feed",
+    { fullness: +28, mood: +4 }, "anim-eat", sndFeed, LINES.feed, "🍖"));
+  $("btn-play").addEventListener("click", () => act("play",
+    { mood: +22, energy: -10, fullness: -4 }, "anim-dance", sndPlay, LINES.play, "🎵"));
+  $("btn-sleep").addEventListener("click", () => {
+    if (busy && !sleeping) return;
+    if (sleeping) { // 点一下提前叫醒
+      wakeIfNeeded("wake");
+      return;
+    }
+    sleeping = true;
+    sleepEnd = Date.now() + 20000;
+    petEl.classList.remove("anim-eat", "anim-dance", "anim-bath");
+    petEl.classList.add("anim-sleep");
+    zzzEl.classList.add("show");
+    showEmote("sleep");
+    sndSleep();
+    say(pick(LINES.sleep));
+  });
+  $("btn-bath").addEventListener("click", () => act("bath",
+    { clean: +30, mood: +6 }, "anim-bath", sndBath, LINES.bath, "🫧"));
+
+  $("btn-reset").addEventListener("click", () => {
+    if (!confirm("要重新养育一位新的雷米埃尔吗？")) return;
+    localStorage.removeItem(LS_KEY);
+    localStorage.removeItem(PET_BORN_KEY);
+    location.reload();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+    if (e.key === "1") $("btn-feed").click();
+    else if (e.key === "2") $("btn-play").click();
+    else if (e.key === "3") $("btn-sleep").click();
+    else if (e.key === "4") $("btn-bath").click();
+  });
+
+  // 点击宠物本身 = 摸摸 → 心情微升
+  petEl.addEventListener("click", () => {
+    if (sleeping) { wakeIfNeeded("pet"); return; }
+    state.mood = clamp(state.mood + 3);
+    save();
+    spawnFX("💗", 4, 40);
+    tone(880, 0.12, { type: "sine", vol: 0.08 });
+    updateBars();
+    say("嘿嘿，别摸啦……", 1600);
+  });
+
+  /* ---------- 主循环 ---------- */
+  let idleLineTimer = null;
+  function scheduleIdleLine() {
+    clearTimeout(idleLineTimer);
+    idleLineTimer = setTimeout(() => {
+      if (!bubble.classList.contains("show")) say(pick(LINES.idle), 2600);
+      scheduleIdleLine();
+    }, 45000);
+  }
+
+  decay(); // 启动时结算离线时间
+  save();
+  showEmote("idle");
+  updateBars();
+  say(pick(LINES.idle), 3000);
+  scheduleIdleLine();
+
+  setInterval(() => {
+    if (sleeping) {
+      state.energy = clamp(state.energy + 6); // 睡觉快速回精力
+      state.mood = clamp(state.mood + 1);
+      if (Date.now() > sleepEnd) wakeIfNeeded("auto");
+    }
+    decay();
+    save();
+    updateBars();
+    if (Math.random() < 0.12) lowStatusWarning();
+  }, 5000);
+
+  /* ---------- 星空 ---------- */
+  const starsEl = $("stars");
+  for (let i = 0; i < 60; i++) {
+    const s = document.createElement("span");
+    s.style.left = Math.random() * 100 + "%";
+    s.style.top = Math.random() * 100 + "%";
+    s.style.animationDelay = (Math.random() * 3) + "s";
+    s.style.animationDuration = (2 + Math.random() * 3) + "s";
+    if (i % 7 === 0) { s.style.width = "4px"; s.style.height = "4px"; s.style.background = "#ffd7ea"; }
+    starsEl.appendChild(s);
+  }
+})();
+</script>
+</body>
+</html>
