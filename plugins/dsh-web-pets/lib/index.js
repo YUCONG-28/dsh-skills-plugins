@@ -60,6 +60,16 @@ const DEFAULT_PET = 'demo'
 /** 宠物状态集合。 */
 const STATE_IDS = ['idle', 'thinking', 'waiting', 'running', 'success']
 
+// ---- 显示参数边界（与官方 dsh-pet 的 display 配置一致） ----
+/** 大小下限（px）。 */
+const SIZE_MIN = 32
+/** 大小上限（px）。 */
+const SIZE_MAX = 512
+/** 右/下内边距上限（px）。 */
+const INSET_MAX = 10_000
+/** 自定义显示名最大长度。 */
+const NAME_MAX_LENGTH = 20
+
 // ---------------------------------------------------------------------------
 // 运行态
 // ---------------------------------------------------------------------------
@@ -71,6 +81,12 @@ let petState = {
   activePet: DEFAULT_PET,
   visible: true,
   size: 160,
+  /** 距视口右缘的内边距（px），与官方 dsh-pet 参数一致。 */
+  right: 24,
+  /** 距视口下缘的内边距（px），与官方 dsh-pet 参数一致。 */
+  bottom: 20,
+  /** 自定义显示名（空 = 使用宠物 display_name）。 */
+  name: '',
   /** 主开关：false 时客户端完全不渲染（无悬浮宠、无召唤按钮）。 */
   enabled: true,
   updatedAt: Date.now(),
@@ -94,6 +110,11 @@ function loadConfig() {
         enabledConfigured = true
       }
       if (typeof cfg.size === 'number' && cfg.size > 0) petState.size = cfg.size
+      if (typeof cfg.right === 'number' && cfg.right >= 0) petState.right = cfg.right
+      if (typeof cfg.bottom === 'number' && cfg.bottom >= 0) petState.bottom = cfg.bottom
+      if (typeof cfg.name === 'string' && cfg.name !== '') {
+        petState.name = Array.from(cfg.name).slice(0, NAME_MAX_LENGTH).join('')
+      }
       if (typeof cfg.activePet === 'string' && cfg.activePet !== '') {
         petState.activePet = cfg.activePet
       }
@@ -112,6 +133,9 @@ function saveConfig() {
       enabled: petState.enabled,
       size: petState.size,
       activePet: petState.activePet,
+      right: petState.right,
+      bottom: petState.bottom,
+      name: petState.name,
     }, null, 2), 'utf8')
   } catch {
     // 写失败不影响运行
@@ -337,6 +361,9 @@ function makeRoutes() {
           enabled: petState.enabled,
           enabledConfigured,
           size: petState.size,
+          right: petState.right,
+          bottom: petState.bottom,
+          name: petState.name,
           updatedAt: petState.updatedAt,
         })
       },
@@ -419,7 +446,7 @@ function makeRoutes() {
         try {
           const body = await readJsonBody(req)
           const size = typeof body.size === 'number' ? body.size : NaN
-          if (!Number.isFinite(size) || size < 40 || size > 480) {
+          if (!Number.isFinite(size) || size < SIZE_MIN || size > SIZE_MAX) {
             json(res, 400, { ok: false, error: 'invalid-size' })
             return
           }
@@ -427,6 +454,60 @@ function makeRoutes() {
           petState.updatedAt = Date.now()
           saveConfig()
           json(res, 200, { ok: true, size: petState.size })
+        } catch (error) {
+          json(res, 400, {
+            ok: false,
+            error: error instanceof Error ? error.message : String(error),
+          })
+        }
+      },
+    },
+    {
+      kind: 'exact',
+      path: `${API_PREFIX}/set-config`,
+      handler: async (req, res) => {
+        // 与官方 dsh-pet 的 set-config 同构：可选 size / right / bottom / name 补丁。
+        if (!requireMethod(req, res, 'POST')) return
+        try {
+          const body = await readJsonBody(req)
+          if (typeof body.size === 'number') {
+            if (body.size < SIZE_MIN || body.size > SIZE_MAX) {
+              json(res, 400, { ok: false, error: 'invalid-size' })
+              return
+            }
+            petState.size = Math.round(body.size)
+          }
+          if (typeof body.right === 'number') {
+            if (!Number.isFinite(body.right) || body.right < 0 || body.right > INSET_MAX) {
+              json(res, 400, { ok: false, error: 'invalid-right' })
+              return
+            }
+            petState.right = Math.round(body.right)
+          }
+          if (typeof body.bottom === 'number') {
+            if (!Number.isFinite(body.bottom) || body.bottom < 0 || body.bottom > INSET_MAX) {
+              json(res, 400, { ok: false, error: 'invalid-bottom' })
+              return
+            }
+            petState.bottom = Math.round(body.bottom)
+          }
+          if (typeof body.name === 'string') {
+            const name = body.name.trim()
+            if (name === '' || Array.from(name).length > NAME_MAX_LENGTH) {
+              json(res, 400, { ok: false, error: 'invalid-name' })
+              return
+            }
+            petState.name = name
+          }
+          petState.updatedAt = Date.now()
+          saveConfig()
+          json(res, 200, {
+            ok: true,
+            size: petState.size,
+            right: petState.right,
+            bottom: petState.bottom,
+            name: petState.name,
+          })
         } catch (error) {
           json(res, 400, {
             ok: false,

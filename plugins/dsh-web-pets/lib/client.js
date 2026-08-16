@@ -42,10 +42,11 @@ window.__ModuleLoader__.load({
 			tag.dataset.plugin = "dsh-web-pets";
 			tag.dataset.pluginCss = CSS_ID;
 			tag.textContent = [
-				// 悬浮桌宠
-				".dwp-root{position:fixed;right:24px;bottom:20px;z-index:2147483000;font-family:system-ui,-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;user-select:none}",
-				".dwp-pet{position:relative;cursor:pointer;line-height:0}",
-				".dwp-pet img{width:100%;height:auto;image-rendering:auto;border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,.28);background:transparent;transition:transform .15s}",
+				// 悬浮桌宠（right/bottom 由内联样式按快照/拖拽实时设置）
+				".dwp-root{position:fixed;z-index:2147483000;font-family:system-ui,-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;user-select:none}",
+				".dwp-pet{position:relative;cursor:grab;line-height:0;touch-action:none}",
+				".dwp-pet.dragging{cursor:grabbing}",
+				".dwp-pet img{height:auto;image-rendering:auto;border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,.28);background:transparent;transition:transform .15s}",
 				".dwp-pet img:hover{transform:scale(1.04)}",
 				".dwp-bubble{position:absolute;left:50%;bottom:calc(100% + 6px);transform:translateX(-50%);max-width:220px;padding:6px 10px;border-radius:10px;background:rgba(20,18,34,.92);color:#f4eefb;font-size:12px;line-height:1.45;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 4px 14px rgba(0,0,0,.35)}",
 				".dwp-bubble::after{content:'';position:absolute;left:50%;top:100%;transform:translateX(-50%);border:6px solid transparent;border-top-color:rgba(20,18,34,.92)}",
@@ -74,6 +75,7 @@ window.__ModuleLoader__.load({
 				".dwp-card-btn{border:1px solid var(--dsw-alias-border-l2, rgba(255,255,255,.12));border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;background:transparent;color:var(--dsw-alias-label-primary, #efeaff)}",
 				".dwp-card-btn:hover{border-color:var(--dsw-alias-state-business-primary, #b07ce8)}",
 				".dwp-card-size{font-size:12px;color:var(--dsw-alias-label-primary, #efeaff);min-width:52px;text-align:center;font-variant-numeric:tabular-nums}",
+				".dwp-card-input{flex:1;min-width:0;border:1px solid var(--dsw-alias-border-l2, rgba(255,255,255,.12));border-radius:8px;padding:5px 10px;font-size:12px;color:var(--dsw-alias-label-primary, #efeaff);background:var(--dsw-specific-input-major, rgba(255,255,255,.06))}",
 				".dwp-card-status{font-size:11px;color:var(--dsw-alias-label-tertiary, #8b84a0);margin-top:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
 				".dwp-card-note{font-size:11px;color:var(--dsw-alias-state-warn-primary, #d9a441);margin-top:6px}",
 			].join("");
@@ -89,6 +91,12 @@ window.__ModuleLoader__.load({
 				"card.description": "在 dsh-web-ui 宠物入口切换/调整宠物（同时只显示一只）",
 				"card.pet": "宠物（点击切换）",
 				"card.size": "大小",
+				"card.position": "位置",
+				"card.right": "右",
+				"card.bottom": "下",
+				"card.name": "名称",
+				"card.save": "保存",
+				"card.namePlaceholder": "自定义名字（≤20 字符）",
 				"card.visible": "显示",
 				"card.hidden": "隐藏",
 				"card.status": "状态",
@@ -105,6 +113,12 @@ window.__ModuleLoader__.load({
 				"card.description": "Switch/adjust pets in the dsh-web-ui pet entry (one pet at a time)",
 				"card.pet": "Pet (click to switch)",
 				"card.size": "Size",
+				"card.position": "Position",
+				"card.right": "Right",
+				"card.bottom": "Bottom",
+				"card.name": "Name",
+				"card.save": "Save",
+				"card.namePlaceholder": "Custom name (≤20 chars)",
 				"card.visible": "Show",
 				"card.hidden": "Hide",
 				"card.status": "Status",
@@ -151,6 +165,7 @@ window.__ModuleLoader__.load({
 			setVisible: (visible) => apiFetch(`${API}/set-visible`, { visible }),
 			setSize: (size) => apiFetch(`${API}/set-size`, { size }),
 			setEnabled: (enabled) => apiFetch(`${API}/set-enabled`, { enabled }),
+			setConfig: (patch) => apiFetch(`${API}/set-config`, patch),
 			interact: () => apiFetch(`${API}/interact`, {}),
 			/** 上游鲸鱼是否活跃（路由可达 ⇔ 其 enabled）。 */
 			upstreamActive: () =>
@@ -158,6 +173,12 @@ window.__ModuleLoader__.load({
 		};
 
 		const POLL_MS = 800;
+
+		// ---- 显示参数边界（与官方 dsh-pet 的 display 配置一致） ----
+		const SIZE_MIN = 32;
+		const SIZE_MAX = 512;
+		const INSET_MAX = 10_000;
+		const NAME_MAX = 20;
 
 		// ------------------------------------------------------------------
 		// React 组件
@@ -170,6 +191,17 @@ window.__ModuleLoader__.load({
 			const map = pet && pet.emotes ? pet.emotes : {};
 			const file = map[snapshot.state] || map.idle || `${snapshot.activePet}_1.gif`;
 			return `${ASSETS}/${snapshot.activePet}/emotes/${file}`;
+		}
+
+		/** 由快照计算悬浮层内联样式（root 定位 right/bottom，img 大小）——与官方参数同构。 */
+		function displayStyle(snapshot) {
+			const size = Math.max(SIZE_MIN, Math.min(SIZE_MAX, snapshot.size || 160));
+			const right = Math.max(0, Math.min(INSET_MAX, snapshot.right ?? 24));
+			const bottom = Math.max(0, Math.min(INSET_MAX, snapshot.bottom ?? 20));
+			return {
+				rootStyle: { right: `${right}px`, bottom: `${bottom}px` },
+				imgStyle: { width: `${size}px`, height: "auto" },
+			};
 		}
 
 		/** 桌宠主体：图片 + 气泡 + 右键菜单。 */
@@ -190,7 +222,46 @@ window.__ModuleLoader__.load({
 				return () => document.removeEventListener("mousedown", onDown);
 			}, [menuOpen]);
 
-			const sizePx = Math.max(40, Math.min(480, snapshot.size || 160));
+			// ---- 拖拽（与官方 dsh-pet 一致：拖动更新 right/bottom 并持久化） ----
+			const dragRef = useRef(null);
+			const didDragRef = useRef(false);
+			const [dragPos, setDragPos] = useState(null);
+
+			const onPointerDown = (e) => {
+				if (e.button !== 0) return;
+				e.preventDefault();
+				didDragRef.current = false;
+				const base = { right: snapshot.right ?? 24, bottom: snapshot.bottom ?? 20 };
+				dragRef.current = { startX: e.clientX, startY: e.clientY, ...base, pos: { ...base } };
+				setDragPos({ ...base });
+				e.currentTarget.setPointerCapture?.(e.pointerId);
+			};
+			const onPointerMove = (e) => {
+				const d = dragRef.current;
+				if (!d) return;
+				const right = Math.max(0, Math.min(INSET_MAX, d.right - (e.clientX - d.startX)));
+				const bottom = Math.max(0, Math.min(INSET_MAX, d.bottom - (e.clientY - d.startY)));
+				if (Math.abs(e.clientX - d.startX) > 4 || Math.abs(e.clientY - d.startY) > 4) {
+					didDragRef.current = true;
+				}
+				d.pos = { right, bottom };
+				setDragPos({ right, bottom });
+			};
+			const onPointerUp = () => {
+				const d = dragRef.current;
+				if (!d) return;
+				dragRef.current = null;
+				if (didDragRef.current) {
+					// 拖拽结束：持久化位置（与官方 dragEnd 一致）
+					actions.setConfig({ right: d.pos.right, bottom: d.pos.bottom });
+				}
+				setDragPos(null);
+			};
+
+			const styles = displayStyle(snapshot);
+			const rootStyle = dragPos
+				? { ...styles.rootStyle, right: `${dragPos.right}px`, bottom: `${dragPos.bottom}px` }
+				: styles.rootStyle;
 			const bubbleText = feedback || snapshot.bubble || "";
 
 			const menu = menuOpen
@@ -234,6 +305,7 @@ window.__ModuleLoader__.load({
 				"div",
 				{
 					className: "dwp-root",
+					style: rootStyle,
 					onContextMenu: (e) => {
 						e.preventDefault();
 						setMenuOpen((v) => !v);
@@ -244,11 +316,25 @@ window.__ModuleLoader__.load({
 					: null,
 				createElement(
 					"div",
-					{ className: "dwp-pet", onClick: () => actions.interact() },
+					{
+						className: "dwp-pet" + (dragPos ? " dragging" : ""),
+						onClick: () => {
+							// 拖拽结束后会触发 click：有位移时忽略，仅当纯点击才摸头
+							if (didDragRef.current) {
+								didDragRef.current = false;
+								return;
+							}
+							actions.interact();
+						},
+						onPointerDown,
+						onPointerMove,
+						onPointerUp,
+						onPointerCancel: onPointerUp,
+					},
 					createElement("img", {
 						src: emoteUrl(snapshot),
-						width: sizePx,
-						alt: snapshot.activePet,
+						style: styles.imgStyle,
+						alt: snapshot.name || snapshot.activePet,
 						draggable: false,
 					}),
 				),
@@ -278,10 +364,16 @@ window.__ModuleLoader__.load({
 			const [whaleFailed, setWhaleFailed] = useState(false);
 			const [autoOff, setAutoOff] = useState(false);
 			const [pending, setPending] = useState(false);
+			const [nameDraft, setNameDraft] = useState("");
+			const nameInitRef = useRef(false);
 
 			const refreshAll = () => {
 				petApi.state().then((data) => {
 					setSnapshot(data);
+					if (!nameInitRef.current) {
+						nameInitRef.current = true;
+						setNameDraft(data.name || "");
+					}
 					// 首次加载防双宠：鲸鱼活跃且本插件 enabled 未被显式配置 → 自动让位
 					if (whaleActive && data.enabled === true && !data.enabledConfigured && !autoOff) {
 						setAutoOff(true);
@@ -316,7 +408,9 @@ window.__ModuleLoader__.load({
 				}, () => setPending(false));
 			};
 
-			const size = Math.max(40, Math.min(480, snapshot.size || 160));
+			const size = Math.max(SIZE_MIN, Math.min(SIZE_MAX, snapshot.size || 160));
+			const right = Math.max(0, Math.min(INSET_MAX, snapshot.right ?? 24));
+			const bottom = Math.max(0, Math.min(INSET_MAX, snapshot.bottom ?? 20));
 			const oursActive = snapshot.enabled === true;
 			const currentLabel = whaleActive
 				? t("card.whaleOff")
@@ -397,19 +491,74 @@ window.__ModuleLoader__.load({
 					{ className: "dwp-card-row" },
 					createElement(
 						"button",
-						{ className: "dwp-card-btn", disabled: pending, onClick: () => act(() => petApi.setSize(size - 20)) },
+						{ className: "dwp-card-btn", disabled: pending, onClick: () => act(() => petApi.setConfig({ size: size - 20 })) },
 						"−",
 					),
 					createElement("span", { className: "dwp-card-size" }, `${size}px`),
 					createElement(
 						"button",
-						{ className: "dwp-card-btn", disabled: pending, onClick: () => act(() => petApi.setSize(size + 20)) },
+						{ className: "dwp-card-btn", disabled: pending, onClick: () => act(() => petApi.setConfig({ size: size + 20 })) },
 						"+",
 					),
 					createElement(
 						"button",
 						{ className: "dwp-card-btn", disabled: pending || !oursActive, onClick: () => act(() => petApi.setVisible(!snapshot.visible)) },
 						snapshot.visible ? t("card.hidden") : t("card.visible"),
+					),
+				),
+				createElement("p", { className: "dwp-card-section" }, t("card.position")),
+				createElement(
+					"div",
+					{ className: "dwp-card-row" },
+					createElement("span", { className: "dwp-card-size" }, t("card.right")),
+					createElement(
+						"button",
+						{ className: "dwp-card-btn", disabled: pending, onClick: () => act(() => petApi.setConfig({ right: right - 10 })) },
+						"−",
+					),
+					createElement("span", { className: "dwp-card-size" }, `${right}px`),
+					createElement(
+						"button",
+						{ className: "dwp-card-btn", disabled: pending, onClick: () => act(() => petApi.setConfig({ right: right + 10 })) },
+						"+",
+					),
+					createElement("span", { className: "dwp-card-size", style: { minWidth: 12 } }, "·"),
+					createElement("span", { className: "dwp-card-size" }, t("card.bottom")),
+					createElement(
+						"button",
+						{ className: "dwp-card-btn", disabled: pending, onClick: () => act(() => petApi.setConfig({ bottom: bottom - 10 })) },
+						"−",
+					),
+					createElement("span", { className: "dwp-card-size" }, `${bottom}px`),
+					createElement(
+						"button",
+						{ className: "dwp-card-btn", disabled: pending, onClick: () => act(() => petApi.setConfig({ bottom: bottom + 10 })) },
+						"+",
+					),
+				),
+				createElement("p", { className: "dwp-card-section" }, t("card.name")),
+				createElement(
+					"div",
+					{ className: "dwp-card-row" },
+					createElement(
+						"input",
+						{
+							className: "dwp-card-input",
+							type: "text",
+							value: nameDraft,
+							maxLength: NAME_MAX,
+							placeholder: t("card.namePlaceholder"),
+							onChange: (e) => setNameDraft(e.target.value),
+						},
+					),
+					createElement(
+						"button",
+						{
+							className: "dwp-card-btn",
+							disabled: pending || nameDraft.trim() === "",
+							onClick: () => act(() => petApi.setConfig({ name: nameDraft })),
+						},
+						t("card.save"),
 					),
 				),
 				autoOff
@@ -506,6 +655,9 @@ window.__ModuleLoader__.load({
 							setSize: (size) => {
 								petApi.setSize(size).then(pollNow, pollNow);
 							},
+							setConfig: (patch) => {
+								petApi.setConfig(patch).then(pollNow, pollNow);
+							},
 							hide: () => {
 								petApi.setVisible(false).then(pollNow, pollNow);
 							},
@@ -582,6 +734,8 @@ window.__ModuleLoader__.load({
 
 		exports.apply = apply;
 		exports.inject = inject;
+		// 测试钩子：暴露纯逻辑供验证 harness 断言（加载器忽略多余导出）。
+		exports._internals = { emoteUrl, displayStyle };
 		return module.exports;
 	}
 });
