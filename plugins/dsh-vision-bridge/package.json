@@ -9,7 +9,8 @@
   },
   "files": [
     "lib",
-    "README.md"
+    "README.md",
+    "scripts"
   ],
   "license": "MIT",
   "peerDependencies": {
