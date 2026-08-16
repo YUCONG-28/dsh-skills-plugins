@@ -1,0 +1,14 @@
+# macOS
+.DS_Store
+
+# Node / pnpm
+node_modules/
+*.log
+.pnpm-store/
+
+# Python
+__pycache__/
+*.pyc
+
+# Study-review 中间产物
+.cache/
