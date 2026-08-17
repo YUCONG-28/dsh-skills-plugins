@@ -87,6 +87,12 @@ let petState = {
   bottom: 20,
   /** 自定义显示名（空 = 使用宠物 display_name）。 */
   name: '',
+  /** 水平镜像（左右翻转），与原生 desktop-pets mirror_x 语义一致。 */
+  mirrorX: false,
+  /** 垂直镜像（上下翻转），与原生 desktop-pets mirror_y 语义一致。 */
+  mirrorY: false,
+  /** 当前正在执行的工具名（tool/call 时写入，供状态行/调试显示）。 */
+  tool: '',
   /** 主开关：false 时客户端完全不渲染（无悬浮宠、无召唤按钮）。 */
   enabled: true,
   updatedAt: Date.now(),
@@ -115,6 +121,8 @@ function loadConfig() {
       if (typeof cfg.name === 'string' && cfg.name !== '') {
         petState.name = Array.from(cfg.name).slice(0, NAME_MAX_LENGTH).join('')
       }
+      if (cfg.mirrorX === true) petState.mirrorX = true
+      if (cfg.mirrorY === true) petState.mirrorY = true
       if (typeof cfg.activePet === 'string' && cfg.activePet !== '') {
         petState.activePet = cfg.activePet
       }
@@ -136,6 +144,8 @@ function saveConfig() {
       right: petState.right,
       bottom: petState.bottom,
       name: petState.name,
+      mirrorX: petState.mirrorX,
+      mirrorY: petState.mirrorY,
     }, null, 2), 'utf8')
   } catch {
     // 写失败不影响运行
@@ -233,7 +243,7 @@ function truncate90(s) {
   return Array.from(cleaned).slice(0, 90).join('')
 }
 
-/** 从 tool/call 的 arguments JSON 里取一段预览。 */
+/** 从 tool/call 的 arguments JSON 里取一段预览（通用兜底：首个字符串值）。 */
 function toolArgsPreview(argumentsJson) {
   if (typeof argumentsJson !== 'string' || argumentsJson === '') return ''
   try {
@@ -250,6 +260,67 @@ function toolArgsPreview(argumentsJson) {
   }
 }
 
+/** 从解析后的 arguments 按候选键取首个字符串值（支持对象值内取首个字符串）。 */
+function pickField(obj, candidates) {
+  if (!obj || typeof obj !== 'object') return ''
+  for (const key of candidates) {
+    const value = obj[key]
+    if (typeof value === 'string' && value !== '') return value
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      for (const v of Object.values(value)) {
+        if (typeof v === 'string' && v !== '') return v
+      }
+    }
+  }
+  return ''
+}
+
+/**
+ * 常见工具展示映射：运行时 tool/call 时按工具类型展示有意义信息
+ * （bash → 命令、read → 文件路径、web_search → 查询词…）。
+ * 键为真实事件里的工具名（小写）；未列出的工具走通用回退。
+ */
+const TOOL_PRESENTATION = {
+  bash: { icon: '🖥', label: '命令', fields: ['command'] },
+  read: { icon: '📖', label: '读取', fields: ['file_path', 'path'] },
+  write: { icon: '✏️', label: '写入', fields: ['file_path', 'path'] },
+  edit: { icon: '✏️', label: '修改', fields: ['file_path', 'path'] },
+  glob: { icon: '🔎', label: '匹配', fields: ['pattern'] },
+  grep: { icon: '🔍', label: '搜索', fields: ['pattern', 'path'] },
+  stat: { icon: '📁', label: '查看', fields: ['path', 'file_path'] },
+  list: { icon: '📁', label: '列表', fields: ['path', 'directory'] },
+  'web_search': { icon: '🌐', label: '搜索', fields: ['query'] },
+  'todo_write': { icon: '📋', label: '待办', fields: [] },
+  ssh_exec: { icon: '🖥', label: '远程命令', fields: ['command', 'alias'] },
+  ssh_upload: { icon: '📤', label: '上传', fields: ['localPath', 'remotePath'] },
+  ssh_download: { icon: '📥', label: '下载', fields: ['remotePath', 'localPath'] },
+  ssh_tunnel: { icon: '🔀', label: '隧道', fields: ['remotePort', 'alias'] },
+  ssh_list: { icon: '📋', label: '主机列表', fields: ['query'] },
+}
+
+/** 按工具类型生成气泡文案；未知工具回退「🛠 工具名 · 参数预览」。 */
+function toolBubble(name, argumentsJson) {
+  const toolName = typeof name === 'string' && name !== '' ? name : 'tool'
+  const pres = TOOL_PRESENTATION[toolName] ?? null
+  let detail = ''
+  if (typeof argumentsJson === 'string' && argumentsJson !== '') {
+    try {
+      const parsed = JSON.parse(argumentsJson)
+      if (pres && pres.fields.length > 0) {
+        detail = pickField(parsed, pres.fields)
+      }
+      if (detail === '') detail = toolArgsPreview(argumentsJson)
+    } catch {
+      detail = truncate90(argumentsJson)
+    }
+  }
+  if (pres) {
+    const head = pres.label ? `${pres.icon} ${pres.label}` : pres.icon
+    return detail !== '' ? `${head} · ${truncate90(detail)}` : `${head} · ${toolName}`
+  }
+  return detail !== '' ? `🛠 ${toolName} · ${truncate90(detail)}` : `🛠 ${toolName}`
+}
+
 /** 会话事件 → 宠物状态（与桌面版联动协议一致）。 */
 function onSessionEvent(_session, event) {
   try {
@@ -258,10 +329,13 @@ function onSessionEvent(_session, event) {
       case 'step/start':
         setPetState('thinking')
         break
-      case 'tool/call':
+      case 'tool/call': {
+        const toolName = String(event.data?.name ?? 'tool')
+        petState.tool = toolName
         setPetState('running')
-        setBubble(`🛠 ${String(event.data?.name ?? 'tool')} · ${truncate90(toolArgsPreview(event.data?.arguments))}`)
+        setBubble(toolBubble(toolName, event.data?.arguments))
         break
+      }
       case 'turn/end': {
         const kind = event.data?.reason?.kind
         if (kind === 'completed') {
@@ -269,6 +343,7 @@ function onSessionEvent(_session, event) {
           setBubble('🎉 完成！')
         } else {
           // aborted / interrupted / failed：清掉工作姿态
+          petState.tool = ''
           setPetState('idle')
         }
         break
@@ -284,6 +359,7 @@ function onSessionEvent(_session, event) {
 /** 会话销毁：回 idle 并清气泡。 */
 function onSessionDisposed() {
   try {
+    petState.tool = ''
     setPetState('idle')
     petState.bubble = ''
     petState.updatedAt = Date.now()
@@ -364,6 +440,9 @@ function makeRoutes() {
           right: petState.right,
           bottom: petState.bottom,
           name: petState.name,
+          mirrorX: petState.mirrorX,
+          mirrorY: petState.mirrorY,
+          tool: petState.tool,
           updatedAt: petState.updatedAt,
         })
       },
@@ -499,6 +578,20 @@ function makeRoutes() {
             }
             petState.name = name
           }
+          if ('mirrorX' in body) {
+            if (typeof body.mirrorX !== 'boolean') {
+              json(res, 400, { ok: false, error: 'invalid-mirrorX' })
+              return
+            }
+            petState.mirrorX = body.mirrorX
+          }
+          if ('mirrorY' in body) {
+            if (typeof body.mirrorY !== 'boolean') {
+              json(res, 400, { ok: false, error: 'invalid-mirrorY' })
+              return
+            }
+            petState.mirrorY = body.mirrorY
+          }
           petState.updatedAt = Date.now()
           saveConfig()
           json(res, 200, {
@@ -507,6 +600,8 @@ function makeRoutes() {
             right: petState.right,
             bottom: petState.bottom,
             name: petState.name,
+            mirrorX: petState.mirrorX,
+            mirrorY: petState.mirrorY,
           })
         } catch (error) {
           json(res, 400, {
@@ -618,3 +713,8 @@ export function apply(ctx) {
     clearTimeout(feedbackTimer)
   }
 }
+
+/**
+ * 测试钩子：暴露纯逻辑供验证 harness 断言（cordis 只消费 name/inject/apply）。
+ */
+export const _internals = { toolBubble, toolArgsPreview, truncate90 }

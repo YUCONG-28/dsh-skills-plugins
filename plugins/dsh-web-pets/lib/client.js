@@ -97,6 +97,9 @@ window.__ModuleLoader__.load({
 				"card.name": "名称",
 				"card.save": "保存",
 				"card.namePlaceholder": "自定义名字（≤20 字符）",
+				"card.mirror": "镜像",
+				"card.mirrorX": "水平",
+				"card.mirrorY": "垂直",
 				"card.visible": "显示",
 				"card.hidden": "隐藏",
 				"card.status": "状态",
@@ -119,6 +122,9 @@ window.__ModuleLoader__.load({
 				"card.name": "Name",
 				"card.save": "Save",
 				"card.namePlaceholder": "Custom name (≤20 chars)",
+				"card.mirror": "Mirror",
+				"card.mirrorX": "H",
+				"card.mirrorY": "V",
 				"card.visible": "Show",
 				"card.hidden": "Hide",
 				"card.status": "Status",
@@ -193,14 +199,20 @@ window.__ModuleLoader__.load({
 			return `${ASSETS}/${snapshot.activePet}/emotes/${file}`;
 		}
 
-		/** 由快照计算悬浮层内联样式（root 定位 right/bottom，img 大小）——与官方参数同构。 */
+		/** 由快照计算悬浮层内联样式（root 定位 right/bottom，img 大小+镜像）——与官方参数同构。 */
 		function displayStyle(snapshot) {
 			const size = Math.max(SIZE_MIN, Math.min(SIZE_MAX, snapshot.size || 160));
 			const right = Math.max(0, Math.min(INSET_MAX, snapshot.right ?? 24));
 			const bottom = Math.max(0, Math.min(INSET_MAX, snapshot.bottom ?? 20));
+			const mirrorX = snapshot.mirrorX === true;
+			const mirrorY = snapshot.mirrorY === true;
 			return {
 				rootStyle: { right: `${right}px`, bottom: `${bottom}px` },
-				imgStyle: { width: `${size}px`, height: "auto" },
+				imgStyle: {
+					width: `${size}px`,
+					height: "auto",
+					transform: `scaleX(${mirrorX ? -1 : 1}) scaleY(${mirrorY ? -1 : 1})`,
+				},
 			};
 		}
 
@@ -291,6 +303,13 @@ window.__ModuleLoader__.load({
 							{ className: "dwp-menu-row" },
 							createElement("button", { onClick: () => actions.setSize((snapshot.size || 160) - 20) }, "− 缩小"),
 							createElement("button", { onClick: () => actions.setSize((snapshot.size || 160) + 20) }, "放大 ＋"),
+						),
+						createElement("div", { className: "dwp-menu-sep" }),
+						createElement(
+							"div",
+							{ className: "dwp-menu-row" },
+							createElement("button", { onClick: () => actions.setConfig({ mirrorX: !snapshot.mirrorX }) }, "↔ 水平镜像"),
+							createElement("button", { onClick: () => actions.setConfig({ mirrorY: !snapshot.mirrorY }) }, "↕ 垂直镜像"),
 						),
 						createElement("div", { className: "dwp-menu-sep" }),
 						createElement(
@@ -559,6 +578,29 @@ window.__ModuleLoader__.load({
 							onClick: () => act(() => petApi.setConfig({ name: nameDraft })),
 						},
 						t("card.save"),
+					),
+				),
+				createElement("p", { className: "dwp-card-section" }, t("card.mirror")),
+				createElement(
+					"div",
+					{ className: "dwp-card-pets" },
+					createElement(
+						"button",
+						{
+							className: "dwp-card-pet" + (snapshot.mirrorX ? " active" : ""),
+							disabled: pending,
+							onClick: () => act(() => petApi.setConfig({ mirrorX: !snapshot.mirrorX })),
+						},
+						"↔ " + t("card.mirrorX"),
+					),
+					createElement(
+						"button",
+						{
+							className: "dwp-card-pet" + (snapshot.mirrorY ? " active" : ""),
+							disabled: pending,
+							onClick: () => act(() => petApi.setConfig({ mirrorY: !snapshot.mirrorY })),
+						},
+						"↕ " + t("card.mirrorY"),
 					),
 				),
 				autoOff
