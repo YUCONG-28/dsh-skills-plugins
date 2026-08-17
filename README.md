@@ -9,13 +9,21 @@
 ```text
 dsh-skills-plugins/
 ├── skills/                    # DSH 用户级 Skills（放入 ~/.dsh/skills/ 自动发现）
-│   └── study-review/          # 通用课程资料解析、知识融合、学习笔记与考试复习系统
+│   ├── study-review/          # 通用课程资料解析、知识融合、学习笔记与考试复习系统（v1.0）
+│   └── markdown-math-writer/  # 按目标渲染器正确书写 Markdown LaTeX 公式（GitHub/mpe/generic，v3.0）
 ├── plugins/                   # DSH 插件
-│   ├── dsh-vision-bridge/     # 视觉路由 + 描述兜底：纯文本主模型也能看图
+│   ├── dsh-vision-bridge/     # 视觉路由 + 描述兜底：纯文本主模型也能看图（含本地 OCR）
 │   └── dsh-web-pets/          # Web 桌宠：浏览器内随会话状态换表情的桌宠（可替换形象）
 └── projects/                  # 独立项目（规范源）
     └── desktop-pets/          # macOS 原生多桌宠桌面库（AppKit/PyObjC，desktop-pets 原仓库内容）
 ```
+
+## Skills 一览
+
+| Skill | 版本 | 用途 |
+| --- | --- | --- |
+| `study-review` | 1.0 | 课程/资料整理：提炼结构化学习笔记、公式速查、考点梳理（full / exam / quick / lecture / concept 五模式） |
+| `markdown-math-writer` | 3.0 | 按目标渲染器（GitHub / Markdown Preview Enhanced / 通用）正确书写 Markdown LaTeX 公式，内置验证器与格式化器 |
 
 ## 安装方法
 
@@ -31,11 +39,29 @@ ln -s "$(pwd)/skills/study-review" ~/.dsh/skills/study-review
 
 安装后无需重启：DSH 的 skill watcher 会自动发现，新会话中模型可见 `study-review` 并可调用。
 
+### Skill：markdown-math-writer
+
+```bash
+# 方式一：复制（推荐，独立副本）
+cp -R skills/markdown-math-writer ~/.dsh/skills/
+
+# 方式二：符号链接（保持与仓库同步）
+ln -s "$(pwd)/skills/markdown-math-writer" ~/.dsh/skills/markdown-math-writer
+```
+
+首次使用其验证/格式化脚本（`validate_math.mjs` / `github_safe_math.mjs` / `render_html.mjs`）前，在 `scripts/` 目录安装依赖（`package-lock.json` 已入库，`node_modules` 不入库）：
+
+```bash
+cd ~/.dsh/skills/markdown-math-writer/scripts && npm install
+```
+
+安装后无需重启：DSH 的 skill watcher 会自动发现，新会话中模型可见 `markdown-math-writer` 并可调用（目标是 README / GitHub 仓库文档时自动进入 github-safe 方言）。
+
 ### 插件：dsh-vision-bridge
 
 ```bash
 # 方式一：以本地路径安装到 DSH profile
-dsh plugin add file:$(pwd)/plugins/dsh-vision-bridge
+dsh plugin --profile web add file:$(pwd)/plugins/dsh-vision-bridge
 
 # 方式二：复制到任意目录后手动安装
 cp -R plugins/dsh-vision-bridge ~/dsh-vision-bridge
@@ -51,6 +77,8 @@ bash plugins/dsh-vision-bridge/bin/apply-vision-patch.sh
 ```
 
 在 `cordis.patch.yml` 中启用插件并配置视觉模型（示例见插件 README）。
+
+主要能力：含图轮次自动路由到 Qwen VL 原生识别、下一轮自动回到主模型（native 模式）；文字密集图片（截图/文档）先用 macOS Vision **本地 OCR**（零 API 成本、字符级精确）；识别失败自动降级备用引擎；运行参数可用 `~/.dsh/vision-bridge.json` **热配置**（免重启）。详见 [`plugins/dsh-vision-bridge/README.md`](plugins/dsh-vision-bridge/README.md)。
 
 ### 插件：dsh-web-pets（Web 桌宠）
 
@@ -78,7 +106,12 @@ scripts/petctl.sh remiel start          # 启动桌宠
 
 ### 兼容性
 
-`SKILL.md` 采用 agent-skills 通用格式，兼容 Claude Code / Codex 等生态；`study-review` 的解析脚本仅依赖 Python 标准库与 Ghostscript（`gs`），跨 macOS / Linux 可用。`dsh-web-pets` 遵循 dsh 官方客户端插件形态（`dsh.client` 声明 + `__ModuleLoader__` bundle），可在任意包含 dsh-web-ui 客户端壳的 profile 中安装。
+`SKILL.md` 采用 agent-skills 通用格式，兼容 Claude Code / Codex 等生态：
+
+- `study-review`：解析脚本仅依赖 Python 标准库与 Ghostscript（`gs`），跨 macOS / Linux 可用；
+- `markdown-math-writer`：验证/格式化脚本为 Node.js（`validate_math.mjs` / `github_safe_math.mjs` / `render_html.mjs`，依赖见 `scripts/package.json`），跨平台可用；
+- `dsh-vision-bridge`：本地 OCR 依赖 macOS 自带 Vision（`swift` + `scripts/ocr.swift`），不可用时自动降级到视觉引擎，不影响主流程；
+- `dsh-web-pets`：遵循 dsh 官方客户端插件形态（`dsh.client` 声明 + `__ModuleLoader__` bundle），可在任意包含 dsh-web-ui 客户端壳的 profile 中安装。
 
 ## 维护 / 开发
 
@@ -86,6 +119,8 @@ scripts/petctl.sh remiel start          # 启动桌宠
 - 修改插件：直接改本仓库 `plugins/<name>/`，然后在 profile 目录（`~/.dsh/profiles/web`）执行 `pnpm install` 刷新安装副本（提示 "Already up to date" 时先删除 `node_modules/<name>` 再装），重启 dsh web 生效。
 - **硬链接提醒**：`dsh-web-pets` 与 `dsh-vision-bridge` 的 `node_modules` 安装副本是源码的**硬链接**。用编辑器原地编辑源码会保留硬链接（副本自动同步），但若编辑器**替换**文件（写新 inode），旧硬链接仍指向旧内容 → 重启后运行的是旧代码。改完源码后跑一次 `bash fix-web-profile.sh`（幂等，同步三个插件副本并校验一致性），或执行 `pnpm install` 重链，再重启 dsh web。
 - 新增 Skill：复制到 `skills/<name>/`（含 `SKILL.md`）提交即可；本地安装 `cp -R skills/<name> ~/.dsh/skills/`（DSH 自动发现，无需重启）。
+- 修改 `skills/markdown-math-writer/scripts/` 下脚本：同步更新 `package-lock.json` 并在本地 `npm install` 验证（`node_modules` 不入库）。
+- 本机实际安装状态与一致性核对见 [SUMMARY.md](SUMMARY.md)。
 - 注意：`plugins/dsh-vision-bridge` 的打包范围由 `package.json` 的 `files` 字段决定（当前为 `lib` / `README.md` / `scripts` / `bin`）；`plugins/dsh-web-pets` 的打包范围同理（`lib` / `assets` / `cordis.patch.yml` / `README.md` / `LICENSE`）。
 
 ## 第三方插件（仅引用，不复制代码）
