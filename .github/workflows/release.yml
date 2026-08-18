@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - 'web-pets-v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '要发布/重发的版本号（例如 0.2.2）'
+        required: true
+        default: '0.2.2'
 
 permissions:
   contents: write
@@ -29,6 +35,19 @@ jobs:
           cache: pnpm
           cache-dependency-path: plugins/dsh-web-pets/pnpm-lock.yaml
 
+      - name: Determine version & tag
+        id: meta
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="${GITHUB_REF_NAME#web-pets-v}"
+          fi
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "TAG=web-pets-v$VERSION" >> "$GITHUB_ENV"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=web-pets-v$VERSION" >> "$GITHUB_OUTPUT"
+
       - name: Install & test
         run: |
           pnpm install --frozen-lockfile
@@ -42,16 +61,30 @@ jobs:
           shasum -a 256 "$TARBALL" | awk '{print $1"  "$2}' > dist/SHA256SUMS.txt
           echo "TARBALL=$TARBALL" >> "$GITHUB_ENV"
 
-      - name: Publish to npm (if token present)
+      - name: Publish to npm (skips if NPM_TOKEN absent)
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --access public --provenance || echo "NPM_TOKEN not configured; skipped publish"
-        continue-on-error: true
+        run: |
+          if [ -n "$NODE_AUTH_TOKEN" ]; then
+            npm publish --access public
+          else
+            echo "NPM_TOKEN not configured; skipping npm publish"
+          fi
 
-      - name: Create GitHub Release
+      - name: Create or skip GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          VERSION="${GITHUB_REF_NAME#web-pets-v}"
+          VERSION="${{ steps.meta.outputs.version }}"
+          TAG="${{ steps.meta.outputs.tag }}"
           NOTES=$(awk '/^## v'"$VERSION"'/{flag=1;next}/^## /{if(flag)exit}flag' CHANGELOG.md)
-          gh release create "$GITHUB_REF_NAME"             dist/dsh-web-pets-*.tgz             dist/SHA256SUMS.txt             --title "dsh-web-pets v$VERSION"             --notes "${NOTES:-dsh-web-pets v$VERSION}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists; skip creation"
+          else
+            gh release create "$TAG" \
+              dist/dsh-web-pets-*.tgz \
+              dist/SHA256SUMS.txt \
+              --title "dsh-web-pets v$VERSION" \
+              --notes "${NOTES:-dsh-web-pets v$VERSION}"
+          fi
+
