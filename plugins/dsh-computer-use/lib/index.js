@@ -570,7 +570,7 @@ function apply(ctx, config = {}) {
 						observationId: { type: 'string' },
 						treeText: { type: 'string' },
 						app: { type: 'object', additionalProperties: true },
-						screenshot: { type: 'object', additionalProperties: true },
+						screenshot: { type: ['object', 'null'], additionalProperties: true },
 						observation: { type: 'object', additionalProperties: true },
 					},
 				},
@@ -578,13 +578,15 @@ function apply(ctx, config = {}) {
 			},
 			async execute(args, exec) {
 				const observation = await observeOnce(exec, args, {})
-				return {
+				// screenshot 未请求时为 null；显式省略，避免输出 schema 校验失败
+				const result = {
 					observationId: observation.observationId,
 					treeText: observation.treeText,
 					app: observation.app,
-					screenshot: observation.screenshot,
 					observation,
 				}
+				if (observation.screenshot) result.screenshot = observation.screenshot
+				return result
 			},
 		}),
 

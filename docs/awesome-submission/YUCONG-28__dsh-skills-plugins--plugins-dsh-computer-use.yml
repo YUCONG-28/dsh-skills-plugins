@@ -1,0 +1,6 @@
+url: https://github.com/YUCONG-28/dsh-skills-plugins/tree/main/plugins/dsh-computer-use
+name: YUCONG-28/dsh-skills-plugins#dsh-computer-use
+category: tools
+description:
+  en: 'macOS desktop control for agents: observe Accessibility trees and screenshots, then click, type, key and scroll with per-app grants and one-time confirmations.'
+  zh: 为 Agent 提供 macOS 桌面操控：观察辅助功能树与截图，点击/输入/按键/滚动，带按应用授权与一次性确认。

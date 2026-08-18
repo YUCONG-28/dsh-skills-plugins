@@ -1,0 +1,6 @@
+url: https://github.com/YUCONG-28/dsh-skills-plugins/tree/main/plugins/dsh-web-pets
+name: YUCONG-28/dsh-skills-plugins#dsh-web-pets
+category: fun
+description:
+  en: A web pet living in the DSH browser UI that reacts to real session state, with a one-pet switcher inside the dsh-web-ui pet panel.
+  zh: 在 DSH 浏览器界面里养一只随会话真实状态换表情的桌宠，可在 dsh-web-ui 宠物入口一键切换。

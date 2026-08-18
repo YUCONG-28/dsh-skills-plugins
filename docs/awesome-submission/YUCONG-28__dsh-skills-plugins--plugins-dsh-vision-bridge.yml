@@ -1,0 +1,6 @@
+url: https://github.com/YUCONG-28/dsh-skills-plugins/tree/main/plugins/dsh-vision-bridge
+name: YUCONG-28/dsh-skills-plugins#dsh-vision-bridge
+category: vision
+description:
+  en: 'Vision router for text-only models: routes image turns to Qwen VL for native captioning, with local macOS Vision OCR as a fallback.'
+  zh: 视觉路由：纯文本主模型收到图片时自动交给 Qwen VL 识别，本地 OCR 兜底。
