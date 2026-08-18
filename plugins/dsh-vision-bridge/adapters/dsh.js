@@ -118,9 +118,14 @@ export function createRuntime(ctx, rawConfig, caps) {
 		});
 	}
 
+	/** In-flight evidence builds keyed by cache key (P3.8 dedup). */
+	const inflight = new Map();
+
 	/**
 	 * Build structured evidence for image refs: cache L1/L2 → local OCR →
 	 * remote vision (batch + fallback chain) → fail-soft placeholder.
+	 * Same-image concurrent requests share one in-flight build so the remote
+	 * vision call is paid at most once per cache key.
 	 */
 	async function buildEvidence(refs, opts) {
 		const results = new Map();
@@ -129,15 +134,16 @@ export function createRuntime(ctx, rawConfig, caps) {
 		let visionMs = 0;
 		let provider = '';
 		let fallbackCount = 0;
+		const keyFor = (id) => cacheKeyParts({
+			attachmentId: id,
+			model: config.visionModel,
+			promptVersion: config.promptVersion,
+			schemaVersion: config.schemaVersion,
+			kind: 'vision'
+		});
 		for (const ref of refs) {
 			const id = String(ref.attachmentId);
-			const key = cacheKeyParts({
-				attachmentId: id,
-				model: config.visionModel,
-				promptVersion: config.promptVersion,
-				schemaVersion: config.schemaVersion,
-				kind: 'vision'
-			});
+			const key = keyFor(id);
 			const cached = cache.get(key);
 			if (cached !== void 0) {
 				results.set(id, {
@@ -150,41 +156,66 @@ export function createRuntime(ctx, rawConfig, caps) {
 				});
 				continue;
 			}
-			if (config.localOcr && attachments) {
-				const t0 = Date.now();
+			const existing = inflight.get(key);
+			if (existing !== void 0) {
 				try {
-					const stored = await attachments.readImage(ref, opts.signal);
-					const ocr = await runOcr(config, stored.data, ref, { signal: opts.signal, region: opts.region });
-					ocrMs += Date.now() - t0;
-					if (ocr !== null && ocr.charCount >= config.ocrMinChars) {
-						const entry = {
-							source: 'ocr',
-							text: renderOcrCaption(ocr),
-							ocrCharCount: ocr.charCount,
-							provider: 'local-ocr',
-							promptVersion: config.promptVersion,
-							schemaVersion: config.schemaVersion,
-							createdAtMs: Date.now()
-						};
-						cache.set(key, entry);
-						results.set(id, {
-							entry,
-							cacheHit: false,
-							ocrMs: Date.now() - t0,
-							visionMs: 0,
-							provider: 'local-ocr',
-							fallbackCount: 0
-						});
-						continue;
-					}
-				} catch { /* OCR failed → remote vision */ }
+					const entry = await existing;
+					results.set(id, {
+						entry,
+						cacheHit: true,
+						ocrMs: 0,
+						visionMs: 0,
+						provider: entry.provider ?? '',
+						fallbackCount: 0
+					});
+				} catch { /* fall through to own build */ }
+				continue;
 			}
-			pending.push({ ref, id, key });
+			// register the in-flight build before any async work so concurrent
+			// requests with the same new image await the same build (P3.8)
+			let resolveEntry;
+			const entryPromise = new Promise((resolve) => { resolveEntry = resolve; });
+			inflight.set(key, entryPromise);
+			pending.push({ ref, id, key, needsVision: false, resolve: resolveEntry });
 		}
-		if (pending.length > 0) {
+		// OCR pass (parallel) — text-dense screenshots never touch remote vision
+		await Promise.all(pending.map(async (p) => {
+			if (!config.localOcr || !attachments) return;
+			const t0 = Date.now();
+			try {
+				const stored = await attachments.readImage(p.ref, opts.signal);
+				const ocr = await runOcr(config, stored.data, p.ref, { signal: opts.signal, region: opts.region });
+				ocrMs += Date.now() - t0;
+				if (ocr !== null && ocr.charCount >= config.ocrMinChars) {
+					const entry = {
+						source: 'ocr',
+						text: renderOcrCaption(ocr),
+						ocrCharCount: ocr.charCount,
+						provider: 'local-ocr',
+						promptVersion: config.promptVersion,
+						schemaVersion: config.schemaVersion,
+						createdAtMs: Date.now()
+					};
+					cache.set(p.key, entry);
+					p.resolve(entry);
+					results.set(p.id, {
+						entry,
+						cacheHit: false,
+						ocrMs: Date.now() - t0,
+						visionMs: 0,
+						provider: 'local-ocr',
+						fallbackCount: 0
+					});
+					return;
+				}
+			} catch { /* OCR failed → remote vision */ }
+			p.needsVision = true;
+		}));
+		const visionPending = pending.filter((p) => p.needsVision);
+		if (visionPending.length > 0) {
 			const prepared = [];
 			const preparedKeys = [];
-			for (const p of pending) {
+			for (const p of visionPending) {
 				try {
 					const out = await prepareVisionRef(p.ref, opts);
 					if (out !== null) {
@@ -208,22 +239,19 @@ export function createRuntime(ctx, rawConfig, caps) {
 				visionMs += batch.visionMs;
 				provider = batch.provider;
 				fallbackCount += batch.fallbackCount;
-				for (const p of pending) {
+				for (const p of visionPending) {
 					const res = batch.results.get(p.id);
 					if (res === void 0) continue;
-					if (res.source === 'failed') {
-						const entry = {
+					const entry = res.source === 'failed'
+						? {
 							source: 'failed',
 							text: renderFailureCaption(res.error ?? '识别失败'),
 							provider: '',
 							promptVersion: config.promptVersion,
 							schemaVersion: config.schemaVersion,
 							createdAtMs: Date.now()
-						};
-						cache.set(p.key, entry);
-						results.set(p.id, { entry, cacheHit: false, ocrMs, visionMs, provider: '', fallbackCount });
-					} else {
-						const entry = {
+						}
+						: {
 							source: res.source,
 							text: renderCaption(config, res.text, res.source),
 							provider: res.provider,
@@ -231,26 +259,48 @@ export function createRuntime(ctx, rawConfig, caps) {
 							schemaVersion: config.schemaVersion,
 							createdAtMs: Date.now()
 						};
-						cache.set(p.key, entry);
-						results.set(p.id, { entry, cacheHit: false, ocrMs, visionMs, provider: res.provider, fallbackCount: res.fallbackCount });
-					}
+					cache.set(p.key, entry);
+					p.resolve(entry);
+					results.set(p.id, {
+						entry,
+						cacheHit: false,
+						ocrMs,
+						visionMs,
+						provider: res.provider,
+						fallbackCount: res.fallbackCount
+					});
 				}
 			}
-			for (const p of pending) {
-				if (!results.has(p.id)) {
-					const entry = {
-						source: 'failed',
-						text: renderFailureCaption('附件/图像处理失败'),
-						provider: '',
-						promptVersion: config.promptVersion,
-						schemaVersion: config.schemaVersion,
-						createdAtMs: Date.now()
-					};
-					cache.set(p.key, entry);
-					results.set(p.id, { entry, cacheHit: false, ocrMs, visionMs, provider: '', fallbackCount });
-				}
+			for (const p of visionPending) {
+				if (results.has(p.id)) continue;
+				const entry = {
+					source: 'failed',
+					text: renderFailureCaption('附件/图像处理失败'),
+					provider: '',
+					promptVersion: config.promptVersion,
+					schemaVersion: config.schemaVersion,
+					createdAtMs: Date.now()
+				};
+				cache.set(p.key, entry);
+				p.resolve(entry);
+				results.set(p.id, { entry, cacheHit: false, ocrMs, visionMs, provider: '', fallbackCount });
 			}
 		}
+		for (const p of pending) {
+			if (!results.has(p.id) && typeof p.resolve === 'function') {
+				const entry = {
+					source: 'failed',
+					text: renderFailureCaption('图像证据构建失败'),
+					provider: '',
+					promptVersion: config.promptVersion,
+					schemaVersion: config.schemaVersion,
+					createdAtMs: Date.now()
+				};
+				cache.set(p.key, entry);
+				p.resolve(entry);
+			}
+		}
+		if (inflight.size > 2048) inflight.clear();
 		return { results, ocrMs, visionMs, provider, fallbackCount };
 	}
 

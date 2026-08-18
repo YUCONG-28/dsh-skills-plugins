@@ -293,6 +293,35 @@ test('invalid config rejected by schemastery', () => {
 	assert.throws(() => Config({ cacheSize: 'many' }));
 });
 
+
+test('in-flight dedup: concurrent same-image requests share one vision call', async () => {
+	const m = makeMockCtx();
+	const cfg = baseConfig({ ocrMinChars: 100000 });
+	apply(m.ctx, cfg);
+	const adapter = m.adapterStore.adapter;
+	const options = { provider: 'vision-router', model: 'deepseek-v4-pro-vision', messages: [imageMsg('img-dedup')], signal: void 0 };
+	await Promise.all([consume(adapter, options), consume(adapter, { ...options, messages: [imageMsg('img-dedup')] })]);
+	assert.equal(m.visionCalls.length, 1, 'remote vision must be paid exactly once for the same new image');
+	assert.equal(m.backendCalls.length, 2);
+});
+
+
+test('ctx.visionBridge: ROI-first local OCR + describeRegion (P4)', async () => {
+	const m = makeMockCtx();
+	apply(m.ctx, baseConfig());
+	const vb = m.provided.visionBridge;
+	assert.ok(vb);
+	const data = new Uint8Array([1, 2, 3]);
+	const ref = { attachmentId: 'roi1', mediaType: 'image/png', bytes: 3, width: 10, height: 10 };
+	const region = { x: 0, y: 0, w: 5, h: 5 };
+	const ocr = await vb.ocrRegion(data, ref, region);
+	assert.ok(ocr !== null);
+	assert.match(ocr.text, /余额/);
+	const described = await vb.describeRegion(data, ref, region);
+	assert.equal(described.source, 'ocr');
+	assert.match(described.text, /本地 OCR/);
+});
+
 test('API failure: vision stream error -> fail-soft placeholder, backend still runs', async () => {
 	const m = makeMockCtx({ visionThrows: true });
 	const cfg = baseConfig({ ocrMinChars: 100000, fallbackProviders: [] });
