@@ -1,6 +1,6 @@
 {
   "name": "dsh-web-pets",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "DSH Web 桌宠插件：浏览器里养一只随会话状态换表情的桌宠（内置 demo/remiel），支持随时切换或替换宠物形象；自带设置面板、一键更新与反馈入口",
   "type": "module",
   "main": "lib/index.js",

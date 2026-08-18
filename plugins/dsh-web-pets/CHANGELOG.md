@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.2.3 (2026-08-18)
+
+- release workflow 幂等化：重复发布/重跑时若 Release 已存在则跳过创建，仅补跑 npm publish。
+- release workflow 支持 workflow_dispatch 手动触发（可指定版本号重发）。
+- 版本与测试同步至 0.2.3。
+
 ## v0.2.2 (2026-08-18)
 
 - 发布体系：npm 包（`dsh-web-pets`）、GitHub Release（tarball + SHA256）、CI/CD（ci.yml / release.yml）。

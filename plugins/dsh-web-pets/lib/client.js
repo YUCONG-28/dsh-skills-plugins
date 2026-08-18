@@ -55,7 +55,7 @@ window.__ModuleLoader__.load({
 		/**
 		* Generated current version (from package.json). Do not edit by hand.
 		*/
-		const PET_VERSION = "0.2.2";
+		const PET_VERSION = "0.2.3";
 		//#endregion
 		//#region src/client/index.ts
 		/**
@@ -915,7 +915,7 @@ window.__ModuleLoader__.load({
 						return false;
 					}
 					updInfo = info;
-					const current = info.current || "0.2.2";
+					const current = info.current || "0.2.3";
 					if (!semverGtClient(info.latest.replace(/^web-pets-v/, ""), current)) {
 						if (force) showToast(t("settings.noUpdate"));
 						return false;
@@ -1188,7 +1188,7 @@ window.__ModuleLoader__.load({
 					status.style.flex = "1";
 					status.style.textAlign = "right";
 					status.style.fontSize = "12px";
-					const hasUpdate = updInfo !== null && semverGtClient(updInfo.latest.replace(/^web-pets-v/, ""), "0.2.2");
+					const hasUpdate = updInfo !== null && semverGtClient(updInfo.latest.replace(/^web-pets-v/, ""), "0.2.3");
 					if (hasUpdate) status.textContent = t("settings.hasUpdate") + " " + updInfo.latest;
 					else if (updChecked && updInfo === null) status.textContent = updNetworkHint || t("settings.checkFailed");
 					else if (updChecked) status.textContent = t("settings.noUpdate");
@@ -1230,7 +1230,7 @@ window.__ModuleLoader__.load({
 					desc.textContent = t("settings.feedbackDesc");
 					pane.appendChild(desc);
 					pane.appendChild(buttonRow(t("settings.feedbackBtn"), () => {
-						window.open("https://github.com/YUCONG-28/dsh-skills-plugins/issues/new?title=" + encodeURIComponent("[dsh-web-pets] 反馈") + "&body=%E7%89%88%E6%9C%AC%3A%200.2.2%0A%0A%E6%8F%8F%E8%BF%B0%EF%BC%9A", "_blank");
+						window.open("https://github.com/YUCONG-28/dsh-skills-plugins/issues/new?title=" + encodeURIComponent("[dsh-web-pets] 反馈") + "&body=%E7%89%88%E6%9C%AC%3A%200.2.3%0A%0A%E6%8F%8F%E8%BF%B0%EF%BC%9A", "_blank");
 					}));
 					const repoRow = document.createElement("div");
 					repoRow.className = "dwp-settings-row";
