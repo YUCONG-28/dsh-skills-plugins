@@ -3,9 +3,6 @@
 个人 DeepSeek Harness（DSH）Skill 与插件集合 · Personal collection of DSH skills and plugins.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-<!-- 待 awesome-dsh-plugin 收录确认后启用：
-[![Awesome DSH Plugin](https://awesome-dsh-plugin.com/badge.svg)](https://awesome-dsh-plugin.com)
--->
 
 ## 发现性（Discoverability）
 
@@ -102,7 +99,18 @@ dsh plugin --profile web add link:$(pwd)/plugins/dsh-web-pets
 # 方式二：file: 依赖 + 手工在 profile 的 cordis.patch.yml 加 insert 行（id: web-pets）
 ```
 
-安装后重启 `dsh web`。**并入 dsh-web-ui 的宠物入口**：先装 dsh-web-ui（含鲸鱼宠物 dsh-pet）再装本插件，设置 → Web UI 插件 → 宠物区域出现「宠物选择」卡片，可在鲸鱼娘（上游）/ 豆豆 / 雷米埃尔 / 自定义宠物间切换，**任意时刻只显示一只宠物**；仅装本插件时则是一只独立悬浮宠（右下角）+ 右键菜单切换/调大小/隐藏。替换/新增宠物形象：往 `plugins/dsh-web-pets/assets/pets/<名字>/` 放 `pet.json` + `emotes/` 即可（详见插件 README）。
+安装后重启 `dsh web`。**并入 dsh-web-ui 的宠物入口**：先装 dsh-web-ui（含鲸鱼宠物 dsh-pet）再装本插件，设置 → Web UI 插件 → 宠物区域出现「宠物选择」卡片，可在鲸鱼娘（上游）/ 豆豆 / 雷米埃尔 / 自定义宠物间切换，**任意时刻只显示一只宠物**；仅装本插件时则是一只独立悬浮宠（右下角）+ 右键菜单（缩放/透明度/锁定/暂停/重置/镜像/切换/隐藏）+ **设置面板**（外观 / 行为 / 更新 / 反馈四栏）。替换/新增宠物形象：往 `plugins/dsh-web-pets/assets/pets/<名字>/` 放 `pet.json` + `emotes/` 即可（详见插件 README）。
+
+**开发与构建**（v0.2.0 起为 TS + tsdown 工程，产物 `lib/` 已提交，安装无需构建）：
+
+```bash
+cd plugins/dsh-web-pets
+pnpm install        # 安装 tsdown 等 devDependencies
+pnpm build          # 重新生成素材 data-URI（scripts/generate-art.mjs）+ tsdown 构建 lib/
+pnpm test           # 构建 + node:test 单元测试
+```
+
+**自更新闭环**（monorepo link 安装形态）：设置面板「更新」栏可自动检查 GitHub 新版本，发现新版本后一键执行 `git pull --ff-only` + `bash fix-web-profile.sh`（仅接受本机请求，带 120s 超时）。
 
 ### 插件：dsh-computer-use（Computer Use）
 
@@ -149,7 +157,7 @@ scripts/petctl.sh remiel start          # 启动桌宠
 - 修改 `skills/markdown-math-writer/scripts/` 下脚本：同步更新 `package-lock.json` 并在本地 `npm install` 验证（`node_modules` 不入库）。
 - 本机实际安装状态与一致性核对见 [SUMMARY.md](SUMMARY.md)。
 - **升级兼容**：升级前对照 [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)（上游 API 面矩阵）与 [docs/UPGRADE_RUNBOOK.md](docs/UPGRADE_RUNBOOK.md)（流程/回滚），版本基线记录在 [versions.lock.json](versions.lock.json)。
-- 注意：`plugins/dsh-vision-bridge` 的打包范围由 `package.json` 的 `files` 字段决定（当前为 `lib` / `README.md` / `scripts` / `bin` / `cordis.patch.yml`）；`plugins/dsh-web-pets` 的打包范围同理（`lib` / `assets` / `cordis.patch.yml` / `README.md` / `LICENSE`）。
+- 注意：`plugins/dsh-vision-bridge` 的打包范围由 `package.json` 的 `files` 字段决定（当前为 `lib` / `README.md` / `scripts` / `bin` / `cordis.patch.yml`）；`plugins/dsh-web-pets` 的打包范围同理（`lib` / `assets` / `src` / `scripts` / `cordis.patch.yml` / `CHANGELOG.md` / `README.md` / `README.en.md` / `LICENSE`）。
 
 ## Awesome List 投稿文案
 
@@ -159,7 +167,7 @@ scripts/petctl.sh remiel start          # 启动桌宠
 | --- | --- | --- | --- |
 | `dsh-computer-use` | `tools` | macOS desktop control for agents: observe Accessibility trees and screenshots, click/type/key/scroll with per-app grants and one-time confirmations. | macOS 桌面操控：观察辅助功能树与截图，点击/输入/按键/滚动，带按应用授权与一次性确认。 |
 | `dsh-vision-bridge` | `vision` | Vision router for text-only models: Qwen VL captioning on image turns with local macOS Vision OCR fallback. | 视觉路由：纯文本主模型含图轮次自动交给 Qwen VL 识别，附本地 OCR 兜底。 |
-| `dsh-web-pets` | `fun` | A web pet living in the DSH browser UI that reacts to real session state, with a one-pet switcher in the dsh-web-ui pet panel. | Web 桌宠：随会话真实状态换表情，可在 dsh-web-ui 宠物入口一键切换。 |
+
 
 > 注：`markdown-math-writer` / `study-review` 为纯 SKILL.md 目录（复制到 `~/.dsh/skills/` 使用），暂不满足 awesome 列表「可 `dsh plugin add` 安装」门槛；如需收录可后续打包为 bundle 插件。
 

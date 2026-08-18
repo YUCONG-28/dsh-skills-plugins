@@ -17,6 +17,9 @@
 | `dsh-web-pets` | `web-ui.plugin.item` 槽位（dsh-web-ui 宠物入口的宠物选择卡片） | `@linxin666/dsh-pet` / `@linxin666/dsh-web-ui-all` | 🔴 |
 | `dsh-web-pets` | dsh-pet 的 `pet` 设置命名空间（`enabled` 写开关），经 `webUiSettings`/`settingsScope` 绑定器 | `@linxin666/dsh-pet` | 🔴 |
 | `dsh-web-pets` | dsh-pet 显示参数（size / right / bottom / name，同名同界） | `@linxin666/dsh-pet` | 🟡 |
+| `dsh-web-pets` | 客户端 DOM 增强信号（`[data-cordis-approve]` / `[data-question-key]` / `[data-plan-review-key]` / `[data-chat-flow-kind]`）——默认关闭 | dsh-web-ui 客户端 DOM（非契约接口） | 🟡（缺省关闭，探测失败静默降级） |
+| `dsh-web-pets` | GitHub REST API（releases/tags 自更新检查，带直连 + pinned + 本地代理回退） | api.github.com（外部） | 🟢 |
+| `dsh-web-pets` | `@deepseek-ai/dsh-host-webserver` 路由注册（新增 /info /check /update，Host 本地校验） | DSH 核心 | 🟢 |
 | `dsh-vision-bridge` | pi-ai provider 声明（qwen：apiKeyEnv / baseURL / models / thinkingFormat） | `@deepseek-ai/dsh-llm`（settings.yaml `llm-pi-ai`） | 🟡 |
 | `dsh-vision-bridge` | DashScope 兼容端点角色限制（systemPrompt→首条 user 消息的 developer-role 兼容处理） | DashScope API（外部） | 🟡 |
 | `dsh-vision-bridge` | dsh-host-apiproxy 图像准入（`bin/apply-vision-patch.sh` 放宽） | `@deepseek-ai/dsh-host-apiproxy` | 🔴（dsh 重装后必须重跑补丁） |

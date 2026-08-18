@@ -1,7 +1,7 @@
 {
   "name": "dsh-web-pets",
-  "version": "0.1.0",
-  "description": "DSH Web 桌宠插件：浏览器里养一只随会话状态换表情的桌宠（内置 demo/remiel），支持随时切换或替换宠物形象",
+  "version": "0.2.0",
+  "description": "DSH Web 桌宠插件：浏览器里养一只随会话状态换表情的桌宠（内置 demo/remiel），支持随时切换或替换宠物形象；自带设置面板、一键更新与反馈入口",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
@@ -12,10 +12,19 @@
   "files": [
     "lib",
     "assets",
+    "src",
+    "scripts",
     "cordis.patch.yml",
+    "CHANGELOG.md",
     "README.md",
+    "README.en.md",
     "LICENSE"
   ],
+  "scripts": {
+    "generate": "node scripts/generate-art.mjs",
+    "build": "pnpm generate && tsdown",
+    "test": "pnpm build && node --test test/host.test.mjs test/client.test.mjs"
+  },
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
@@ -41,5 +50,10 @@
     "@deepseek-ai/dsh-session": "^0.1.0-rc.6",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "tsdown": "^0.22.14"
   }
 }

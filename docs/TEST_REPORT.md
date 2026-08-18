@@ -41,6 +41,10 @@
 | dsh-vision-bridge | 真实 dsh web 启动冒烟（P7，临时端口） | ✅ boot OK（本地 rc.7） |
 | dsh-web-pets | assets pet.json ×2 + emotes ×10 | ✅ 完整 |
 | dsh-web-pets | lib export 形状（apply/inject/name/_internals） | ✅ |
+| dsh-web-pets | node:test 单元测试（test/host.test.mjs + test/client.test.mjs，v0.2.0） | ✅ 14/14（构建后） |
+| dsh-web-pets | tsdown 构建（src/host|client → lib/index.js + lib/client.js） | ✅ 产物可解析（node --check） |
+| dsh-web-pets | 真实 dsh web 启动冒烟（临时端口 3099）：/state /info /set-config、CSRF 403、素材 200/304 | ✅ |
+| dsh-web-pets | 自更新 /check（GitHub 网络） | ⏸ 沙箱网络受限未实测（逻辑与 dsh-pet-remielle 同构） |
 | dsh-desktop-pets | lib export 形状 + pet_engine import（pyobjc） | ✅ |
 | dsh-desktop-pets | petctl.sh 生命周期 start→status→stop | ✅ 启动（PID 99846）→ 运行 → 停止，pet.log 无错误 |
 

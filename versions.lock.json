@@ -25,7 +25,7 @@
   "ownPlugins": {
     "dsh-computer-use": "0.1.0",
     "dsh-vision-bridge": "0.1.0",
-    "dsh-web-pets": "0.1.0",
+    "dsh-web-pets": "0.2.0",
     "dsh-desktop-pets": "0.1.0"
   }
 }

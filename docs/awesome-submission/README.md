@@ -9,13 +9,12 @@
 | --- | --- | --- |
 | `YUCONG-28__dsh-skills-plugins--plugins-dsh-computer-use.yml` | dsh-computer-use（monorepo 子目录） | `tools` |
 | `YUCONG-28__dsh-skills-plugins--plugins-dsh-vision-bridge.yml` | dsh-vision-bridge（monorepo 子目录） | `vision` |
-| `YUCONG-28__dsh-skills-plugins--plugins-dsh-web-pets.yml` | dsh-web-pets（monorepo 子目录） | `fun` |
 
 ## 提交步骤
 
 ```bash
 # 1. fork awesome-dsh-plugin 并 clone
-# 2. 把上述 3 个 YAML 放入 data/plugins/
+# 2. 把上述 2 个 YAML 放入 data/plugins/
 # 3. 重新生成 README（上游规则：勿手改 README）
 npm ci
 node scripts/generate-readme.mjs
@@ -31,4 +30,3 @@ node scripts/generate-readme.mjs
 
 - dsh-computer-use（tools）：macOS desktop control for agents: observe Accessibility trees and screenshots, then click, type, key and scroll with per-app grants and one-time confirmations.
 - dsh-vision-bridge（vision）：Vision router for text-only models: routes image turns to Qwen VL for native captioning, with local macOS Vision OCR as a fallback.
-- dsh-web-pets（fun）：A web pet living in the DSH browser UI that reacts to real session state, with a one-pet switcher inside the dsh-web-ui pet panel.
