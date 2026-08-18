@@ -45,6 +45,27 @@ metadata:
 | `computer_perform_action` | 执行元素声明的 accessibility action（**敏感**，需 confirm） |
 | `computer_wait` | 轮询 text/role/title 条件直至满足或超时 |
 | `computer_confirm` | 为敏感动作签发一次性 confirmationToken |
+| `computer_batch` | 批量执行 1~10 个确定性动作（click/type/press/scroll/wait/open/focus/set_value），一次执行一次验证，减少 LLM 往返 |
+
+## 批量执行（computer_batch）
+
+**何时用**：需要连续执行多个确定性动作（如「点击输入框 → 输入文本 → 按回车」）时，一次给出完整动作计划，避免每步一次 LLM 往返：
+
+```json
+{
+  "observationId": "obs-...",
+  "actions": [
+    {"action": "click", "handle": "0.0"},
+    {"action": "type", "text": "hello", "handle": "0.0"},
+    {"action": "press", "key": "return"}
+  ]
+}
+```
+
+- 含敏感动作（type / 带 command 的 press / perform_action）时整个 batch 需要一个 `confirmationToken`（`computer_confirm` 签发，action 填 `computer_batch`）。
+- 任一动作失败立即停止，返回已执行数与失败点；全部完成后一次重观察返回新鲜状态。
+- 批量内 `open` 会切换目标应用（后续动作作用于新应用）。
+- 规划批量时可用 `computer_wait` 预判 UI 变化；复杂/不确定场景不要批量（保持逐步观察）。
 
 ## 错误码恢复
 

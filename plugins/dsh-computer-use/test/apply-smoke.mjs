@@ -18,6 +18,7 @@ const EXPECTED_TOOLS = [
 	'computer_perform_action',
 	'computer_wait',
 	'computer_confirm',
+	'computer_batch',
 ]
 
 function makeCtx() {
@@ -63,7 +64,7 @@ test('apply 注册全部 11 个 computer_* 工具', () => {
 	const { ctx, registered } = makeCtx()
 	const dispose = apply(ctx, {})
 	assert.deepEqual([...registered.tools].sort(), [...EXPECTED_TOOLS].sort())
-	assert.equal(registered.tools.length, 11)
+	assert.equal(registered.tools.length, 12)
 	assert.equal(typeof dispose, 'function')
 	dispose()
 })

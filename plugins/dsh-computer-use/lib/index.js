@@ -21,6 +21,7 @@ import { fileURLToPath } from 'node:url'
 import z from '@deepseek-ai/schemastery'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import { ComputerUseError, resolveHelperCommand, runHelper } from './helper.js'
+import { createBatchExecutor } from './batch.js'
 import { createObservation, isStale, elementByRef, diffObservations, renderDiff, renderTreeText } from './observations.js'
 import {
 	createGrantStore,
@@ -861,7 +862,86 @@ function apply(ctx, config = {}) {
 				return { confirmationToken: token, expiresInMs: config.confirmationTtlMs ?? 60000 }
 			},
 		}),
+
+		defineTool({
+			name: 'computer_batch',
+			description: '批量执行多个确定性动作（click/type/press/scroll/wait/open/focus/set_value），一次执行、一次验证——减少 LLM 往返与观察次数。1~10 个动作；含敏感动作（type/带 command 的 press/perform_action）时需先 computer_confirm 获取 confirmationToken（action=computer_batch）。任一动作失败即停止并返回已执行数与失败点。',
+			parameters: {
+				observationId: { type: 'string', required: true, description: '起始 observation（用于解析元素引用）' },
+				actions: {
+					type: 'array',
+					required: true,
+					items: {
+						type: 'object',
+						additionalProperties: false,
+						properties: {
+							action: { type: 'string', required: true, description: 'click | type | press | scroll | wait | open | focus | set_value' },
+							handle: { type: 'string', description: '目标元素 path（click/focus/type/set_value 用）' },
+							index: { type: 'integer', description: '目标元素下标（与 handle 二选一）' },
+							text: { type: 'string', description: 'type 的文本' },
+							key: { type: 'string', description: 'press 的按键（有限词表）' },
+							modifiers: { type: 'array', items: { type: 'string' }, description: 'press 的修饰键' },
+							direction: { type: 'string', description: 'scroll 方向 up/down/left/right' },
+							amount: { type: 'integer', description: 'scroll 量' },
+							x: { type: 'number', description: '坐标 x' },
+							y: { type: 'number', description: '坐标 y' },
+							value: { type: 'string', description: 'set_value 的值' },
+							clear: { type: 'boolean', description: 'set_value 清空' },
+							ms: { type: 'integer', description: 'wait 毫秒' },
+							target: { type: 'string', description: 'open 的应用名或 URL' },
+							prefer: { type: 'string', description: 'click 的 semantic|coordinate' },
+						},
+					},
+				},
+				confirmationToken: { type: 'string', description: '含敏感动作时必填（先 computer_confirm，action=computer_batch）' },
+			},
+			output: {
+				schema: {
+					type: 'object',
+					additionalProperties: false,
+					properties: {
+						actionsTotal: { type: 'integer' },
+						actionsExecuted: { type: 'integer' },
+						failed: { type: 'object', additionalProperties: true },
+						observation: { type: 'object', additionalProperties: true },
+						diff: { type: 'object', additionalProperties: true },
+						prevObservationId: { type: 'string' },
+					},
+				},
+				render: (args, value) => {
+					const parts = []
+					if (value.failed) {
+						parts.push(`批量执行失败：第 ${value.failed.actionIndex + 1}/${value.actionsTotal} 个动作（${value.failed.actionType}）失败：${value.failed.error}`)
+					} else {
+						parts.push(`批量执行完成：${value.actionsExecuted}/${value.actionsTotal} 个动作一次执行`)
+					}
+					const diffText = renderDiff(value.diff)
+					parts.push(`[新 observation ${value.observation.observationId}]`)
+					if (diffText) parts.push(`界面变化：\n${diffText}`)
+					else parts.push('界面无变化')
+					return observationBlocks(value.observation, parts.join('\n') + '\n')
+				},
+			},
+			async execute(args, exec) {
+				return runBatch(exec, args)
+			},
+		}),
 	]
+
+	// ---------- 批量执行器（Phase 3） ----------
+	const { runBatch } = createBatchExecutor({
+		runHelper,
+		ComputerUseError,
+		requireObservation,
+		ensureControl,
+		requireConfirmation,
+		resolveElementRef,
+		reobserve,
+		diffObservations,
+		appIdentity,
+		config,
+		PACKAGE_ROOT,
+	})
 
 	// ---------- 系统通告 ----------
 	const disposeSection = config.announceToAgent !== false

@@ -19,6 +19,7 @@
 | `computer_perform_action` | 执行元素声明的 accessibility action（**敏感**，需确认） |
 | `computer_wait` | 轮询 text/role/title 条件直至满足或超时 |
 | `computer_confirm` | 为敏感动作签发一次性 confirmationToken |
+| `computer_batch` | 批量执行 1~10 个确定性动作（Phase 3：一次执行一次验证，减少 LLM 往返） |
 
 ## 安全模型
 
