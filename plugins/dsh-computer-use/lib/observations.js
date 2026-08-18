@@ -25,6 +25,8 @@
  * @module dsh-computer-use/observations
  */
 
+import { createHash } from 'node:crypto' 
+
 /** 生成 observation id（带随机后缀）。 */
 export function newObservationId() {
 	return `obs-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
@@ -89,6 +91,7 @@ export function createObservation(input, now = Date.now()) {
 		screenshot: input.screenshot ?? null,
 	}
 	observation.treeText = renderTreeText(observation)
+	observation.stateFingerprint = computeFingerprint(observation)
 	return observation
 }
 
@@ -150,6 +153,56 @@ export function diffObservations(prev, next) {
 		}
 	}
 	return { added, removed, changed }
+}
+
+/**
+ * 计算 observation 的状态指纹（Phase 4 State Change Detection）。
+ * 维度：窗口标题/数量、AX 树 hash（role+title+value）、文本 hash（非空 value）。
+ * 坐标变化不进入指纹（坐标变化不该触发截图）。
+ */
+export function computeFingerprint(observation) {
+	const elements = observation?.elements ?? []
+	const windows = observation?.windows ?? []
+	const hash = (text) => createHash('sha256').update(text).digest('hex')
+	const tokens = elements.map((el) => `${el.role}|${el.title ?? ''}|${el.value ?? ''}`)
+	const textTokens = elements.map((el) => el.value ?? '').filter((v) => v !== '')
+	return {
+		windowTitles: windows.map((w) => w.title ?? ''),
+		windowCount: windows.length,
+		elementCount: elements.length,
+		elementTypes: [...new Set(elements.map((el) => el.role ?? ''))].sort(),
+		axTreeHash: hash(tokens.join('\n')),
+		textHash: hash(textTokens.join('\n')),
+	}
+}
+
+/**
+ * 判定是否明显变化、是否需要重新截图/视觉。
+ * @param prev - 旧指纹。
+ * @param next - 新指纹。
+ * @param thresholds - { minElements, elementRatio, textChange, windowChange }。
+ * @returns { needsVision, reason, changes }。
+ */
+export function needsVision(prev, next, thresholds = {}) {
+	const t = {
+		minElements: thresholds.minElements ?? 3,
+		elementRatio: thresholds.elementRatio ?? 0.1,
+		textChange: thresholds.textChange ?? true,
+		windowChange: thresholds.windowChange ?? true,
+	}
+	const changes = []
+	if (t.windowChange) {
+		if (prev.windowCount !== next.windowCount) changes.push(`window_count:${prev.windowCount}→${next.windowCount}`)
+		if (JSON.stringify(prev.windowTitles) !== JSON.stringify(next.windowTitles)) changes.push('window_titles')
+	}
+	if (prev.axTreeHash !== next.axTreeHash) {
+		const textChanged = prev.textHash !== next.textHash
+		const delta = Math.abs(next.elementCount - prev.elementCount)
+		const base = Math.max(prev.elementCount ?? 1, 1)
+		if (textChanged && t.textChange) changes.push('ax_tree_hash')
+		else if (delta >= t.minElements || delta / base >= t.elementRatio) changes.push(`element_count_delta:${delta}`)
+	}
+	return { needsVision: changes.length > 0, reason: changes.length > 0 ? 'state_changed' : 'state_stable', changes }
 }
 
 /** 渲染差异为模型可读文本（空差异返回空串）。 */

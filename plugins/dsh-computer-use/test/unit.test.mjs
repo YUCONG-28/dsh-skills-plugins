@@ -12,6 +12,8 @@ import {
 	diffObservations,
 	renderDiff,
 	renderTreeText,
+	computeFingerprint,
+	needsVision,
 } from '../lib/observations.js'
 import {
 	createGrantStore,
@@ -158,4 +160,39 @@ test('clearAgent 清理该 agent 的 token', () => {
 	clearAgent(store, 'a1')
 	const r = consumeConfirmation(store, { token, agentId: 'a1', bundleId: 'com.x', observationId: 'obs-1' })
 	assert.equal(r.ok, false)
+})
+
+// ---------------------------------------------------------------------------
+// state fingerprint（Phase 4）
+// ---------------------------------------------------------------------------
+
+test('computeFingerprint：坐标变化不改变指纹，文本变化改变', () => {
+	const base = createObservation({ app: SAMPLE_APP, windows: SAMPLE_WINDOWS, elements: SAMPLE_ELEMENTS, ttlMs: 0 })
+	const moved = createObservation({
+		app: SAMPLE_APP, windows: SAMPLE_WINDOWS,
+		elements: SAMPLE_ELEMENTS.map((el) => ({ ...el, frame: { x: 999, y: 999 } })),
+		ttlMs: 0,
+	})
+	const textChanged = createObservation({
+		app: SAMPLE_APP, windows: SAMPLE_WINDOWS,
+		elements: SAMPLE_ELEMENTS.map((el, i) => (i === 1 ? { ...el, value: 'world' } : el)),
+		ttlMs: 0,
+	})
+	const f1 = computeFingerprint(base)
+	const f2 = computeFingerprint(moved)
+	const f3 = computeFingerprint(textChanged)
+	assert.equal(f1.axTreeHash, f2.axTreeHash)
+	assert.notEqual(f1.axTreeHash, f3.axTreeHash)
+})
+
+test('needsVision：稳定状态不需要截图，文本变化需要', () => {
+	const base = createObservation({ app: SAMPLE_APP, windows: SAMPLE_WINDOWS, elements: SAMPLE_ELEMENTS, ttlMs: 0 })
+	const same = createObservation({ app: SAMPLE_APP, windows: SAMPLE_WINDOWS, elements: SAMPLE_ELEMENTS, ttlMs: 0 })
+	assert.equal(needsVision(computeFingerprint(base), computeFingerprint(same)).needsVision, false)
+	const changed = createObservation({
+		app: SAMPLE_APP, windows: SAMPLE_WINDOWS,
+		elements: SAMPLE_ELEMENTS.map((el, i) => (i === 1 ? { ...el, value: 'completely different' } : el)),
+		ttlMs: 0,
+	})
+	assert.equal(needsVision(computeFingerprint(base), computeFingerprint(changed)).needsVision, true)
 })
