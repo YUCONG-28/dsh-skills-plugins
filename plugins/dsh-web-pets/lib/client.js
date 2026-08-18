@@ -641,8 +641,9 @@ window.__ModuleLoader__.load({
 			// ---- 文案字典（官方 locale 机制） ----
 			try {
 				ctx.effect(() => ctx.locale.register("web-pets", LOCALES), "web-pets: dictionaries");
-			} catch {
-				// locale 服务缺失时静默（卡片用内置 t() 兜底）
+			} catch (e) {
+				// locale 服务缺失时静默（卡片用内置 t() 兜底）；仅打印诊断便于升级排障
+				console.warn("[dsh-web-pets] locale 服务缺失，使用内置文案", e);
 			}
 
 			// ---- 上游 dsh-pet 的 pet 命名空间（切换鲸鱼 enabled） ----
@@ -652,9 +653,12 @@ window.__ModuleLoader__.load({
 				if (binder && typeof binder.bind === "function") {
 					petScope = binder.bind({ namespace: "pet" });
 				}
-			} catch {
+			} catch (e) {
 				// 上游或桥接缺失 → 鲸鱼选项仅显示，切换时提示不可用
+				console.warn("[dsh-web-pets] webUiSettings/settingsScope 绑定不可用：无法切换上游鲸鱼（dsh-web-ui 版本可能已变）", e);
 			}
+			// 版本断言日志：升级 dsh-web-ui 后凭此判断集成面是否可用
+			console.info("[dsh-web-pets] 客户端挂载完成，pet 设置桥接:", petScope ? "available" : "unavailable");
 
 			// ---- dsh-web-ui 宠物入口：宠物选择器卡片（web-ui.plugin.item 槽位） ----
 			try {
@@ -665,8 +669,10 @@ window.__ModuleLoader__.load({
 					locale: "web-pets",
 					inject: () => ({ petScope }),
 				}, WebPetsSettingsCard));
-			} catch {
-				// 无该槽位（未安装 dsh-web-ui-settings 组）时注册无害，忽略
+			} catch (e) {
+				// 无该槽位（未安装 dsh-web-ui-settings 组）时注册无害，忽略；
+				// 升级 dsh-web-ui 后若槽位协议变化，此警告会提示宠物选择卡片未注册
+				console.warn("[dsh-web-pets] web-ui.plugin.item 槽位不可用：宠物选择卡片未注册（未装 dsh-web-ui 或槽位协议已变）", e);
 			}
 
 			// ---- 全局悬浮桌宠（enabled=false 时完全不渲染） ----

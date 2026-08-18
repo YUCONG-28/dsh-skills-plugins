@@ -100,11 +100,26 @@ case "${1:-}" in
     revert_file "$MODULAR" "${MODULAR_PAIRS[@]}"
     echo '请重启 dsh web 使还原生效。'
     ;;
+  --check)
+    # 检测补丁是否仍生效（dsh 重装 / dsh plugin add 触发 pnpm 重链后补丁会失效）
+    stale=0
+    for file in "$BUNDLE" "$MODULAR"; do
+      if [ ! -f "$file" ]; then echo "MISS  $file（不存在）"; stale=1; continue; fi
+      if grep -q "$MARKER" "$file" 2>/dev/null; then
+        echo "OK    $file 补丁仍生效"
+      else
+        echo "STALE $file 补丁已失效 —— 请重跑 $0"
+        stale=1
+      fi
+    done
+    [ "$stale" -ne 0 ] && exit 1
+    exit 0
+    ;;
   -h|--help) sed -n '1,35p' "$0" ;;
   "")
     patch_file "$BUNDLE" "${BUNDLE_PAIRS[@]}"
     patch_file "$MODULAR" "${MODULAR_PAIRS[@]}"
     echo '请重启 dsh web 使补丁生效。'
     ;;
-  *) echo "未知参数: $1（支持 --revert）" >&2; exit 1 ;;
+  *) echo "未知参数: $1（支持 --revert / --check）" >&2; exit 1 ;;
 esac

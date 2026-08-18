@@ -1,0 +1,6 @@
+# dsh-vision-bridge bundle patch（占位声明）
+#
+# 本插件的启用需要视觉模型配置（Qwen provider / model / mode），因此不在
+# bundle patch 中自动 insert，避免与 profile 中的手动配置行重复。
+# 启用方式：在 profile 的 cordis.patch.yml 中 insert 本插件并配置，
+# 详见 README.md「安装方法」。

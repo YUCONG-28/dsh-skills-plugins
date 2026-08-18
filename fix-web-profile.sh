@@ -1,48 +1,84 @@
 #!/usr/bin/env bash
-# fix-web-profile.sh —— 把已修复的 dsh-desktop-pets / dsh-web-pets / dsh-vision-bridge
-# 插件源码同步进 ~/.dsh/profiles/web/node_modules（幂等；web-pets / vision-bridge 为
-# 硬链接，源码编辑后硬链接可能断裂，此脚本强制用源码覆盖安装副本）。
+# fix-web-profile.sh —— 将本仓库全部 file: 插件的源码全量同步进 ~/.dsh/profiles/web/node_modules
+# （幂等，可按需重复执行）。
 #
 # 背景：
-#   - dsh-desktop-pets：插件把 Cordis 服务名写成了 'session'（单数），而官方
-#     @deepseek-ai/dsh-session 注册的服务名是 'sessions'（复数），导致
-#     "pending (waiting for service: session)"。源码已修复；这里同步安装副本。
-#   - dsh-vision-bridge：含图轮次路由到 Qwen 时，pi-ai(rc.6) 对声明了 reasoning 的
-#     视觉模型（如 qwen3.7-flash）把 systemPrompt 序列化为 role:'developer'，
-#     DashScope 兼容端点不接受该角色（400）。源码已加"系统提示并入首条 user 消息"的
-#     兼容处理；这里同步安装副本。
-#   - 注意：直接用文本编辑器改 plugins/ 下的源码会把 node_modules 里的硬链接
-#     "替换"成新 inode（旧链接仍指向旧内容），必须重跑本脚本或 pnpm install。
+#   - pnpm 对 file: 依赖可能用硬链接安装。用编辑器“整文件替换”写源码时会生成新 inode，
+#     旧硬链接仍指向旧内容 → 重启 dsh web 后运行的是旧代码。
+#   - 本脚本按各插件 package.json 的 files 字段，把源码目录同步到安装副本，
+#     并做版本对比 / package.json 差异检测 / cordis.patch.yml 一致性校验。
+#
+# 用法：bash fix-web-profile.sh   （改完源码后执行，然后重启 dsh web）
 set -u
 WS="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROFILE_NM="$HOME/.dsh/profiles/web/node_modules"
+FAIL=0
 
-cp "$WS/projects/desktop-pets/integration/dsh-plugin/lib/index.js" \
-   "$PROFILE_NM/dsh-desktop-pets/lib/index.js"
-cp "$WS/plugins/dsh-web-pets/lib/index.js" \
-   "$PROFILE_NM/dsh-web-pets/lib/index.js"
-cp "$WS/plugins/dsh-vision-bridge/lib/index.js" \
-   "$PROFILE_NM/dsh-vision-bridge/lib/index.js"
+# 插件映射：源码相对路径:安装副本名
+PLUGINS=(
+  "plugins/dsh-vision-bridge:dsh-vision-bridge"
+  "plugins/dsh-web-pets:dsh-web-pets"
+  "plugins/dsh-computer-use:dsh-computer-use"
+  "projects/desktop-pets/integration/dsh-plugin:dsh-desktop-pets"
+)
 
-echo "--- 校验注入/路由声明："
-grep -H "export const inject" \
-  "$PROFILE_NM/dsh-desktop-pets/lib/index.js" \
-  "$PROFILE_NM/dsh-web-pets/lib/index.js"
-grep -H "system: undefined" \
-  "$PROFILE_NM/dsh-vision-bridge/lib/index.js" || echo "注意: vision-bridge 未找到 developer-role 兼容处理"
+for pair in "${PLUGINS[@]}"; do
+  src="${pair%%:*}"; name="${pair##*:}"
+  srcdir="$WS/$src"; dstdir="$PROFILE_NM/$name"
+  echo "==== $name ($src)"
+  if [ ! -d "$srcdir" ]; then echo "  FAIL 源码目录不存在: $src"; FAIL=1; continue; fi
+  if [ ! -d "$dstdir" ]; then echo "  WARN 安装副本不存在: $name —— 请先 cd ~/.dsh/profiles/web && pnpm install"; FAIL=1; continue; fi
 
-echo "--- 源码与安装副本一致性："
-for pair in \
-  "plugins/dsh-vision-bridge/lib/index.js:dsh-vision-bridge/lib/index.js" \
-  "plugins/dsh-web-pets/lib/index.js:dsh-web-pets/lib/index.js" \
-  "projects/desktop-pets/integration/dsh-plugin/lib/index.js:dsh-desktop-pets/lib/index.js"; do
-  src="${pair%%:*}"; dst="${pair##*:}"
-  if diff -q "$WS/$src" "$PROFILE_NM/$dst" >/dev/null 2>&1; then
-    echo "  OK  $src == $dst"
-  else
-    echo "  FAIL $src != $dst（请检查）"
+  # 1) 版本对比
+  srcv="$(node -p "require('$srcdir/package.json').version" 2>/dev/null || echo '?')"
+  dstv="$(node -p "require('$dstdir/package.json').version" 2>/dev/null || echo '?')"
+  if [ "$srcv" != "$dstv" ]; then
+    echo "  NOTE 版本不一致: 源码 $srcv vs 副本 $dstv —— 建议 pnpm install 重链"
   fi
+
+  # 2) package.json 差异 → 提示重链（不直接覆盖，pnpm 以 manifest 为准）
+  if ! diff -q "$srcdir/package.json" "$dstdir/package.json" >/dev/null 2>&1; then
+    echo "  NOTE package.json 有差异 —— 建议 cd ~/.dsh/profiles/web && pnpm install 重链"
+  fi
+
+  # 3) 按 files 字段全量同步（目录/文件均支持）
+  FILES=$(node -p "JSON.stringify(require('$srcdir/package.json').files || [])" 2>/dev/null | tr -d '[]"' | tr ',' '\n' | sed '/^$/d')
+  if [ -z "$FILES" ]; then FILES="lib"; fi
+  for entry in $FILES; do
+    if [ -d "$srcdir/$entry" ]; then
+      mkdir -p "$dstdir/$entry"
+      cp -R "$srcdir/$entry/." "$dstdir/$entry/"
+    elif [ -f "$srcdir/$entry" ]; then
+      cp "$srcdir/$entry" "$dstdir/$entry"
+    else
+      echo "  INFO files 字段含缺失项: $entry（忽略）"
+    fi
+  done
+
+  # 4) 一致性校验（files 覆盖范围）
+  local_bad=0
+  for entry in $FILES; do
+    if [ ! -e "$srcdir/$entry" ]; then continue; fi
+    if diff -rq "$srcdir/$entry" "$dstdir/$entry" >/dev/null 2>&1; then
+      echo "  OK   $entry == 副本"
+    else
+      echo "  FAIL $entry 源码 != 副本（请检查）"; local_bad=1
+    fi
+  done
+  [ "$local_bad" -ne 0 ] && FAIL=1
 done
 
 echo ""
-echo "完成。重启 dsh web 即可；自检：ls -l /tmp/desktop-pets-dsh.loaded"
+echo "--- 校验注入/路由声明："
+grep -H "export const inject" \
+  "$PROFILE_NM/dsh-desktop-pets/lib/index.js" \
+  "$PROFILE_NM/dsh-web-pets/lib/index.js" 2>/dev/null || true
+grep -H "system: undefined" \
+  "$PROFILE_NM/dsh-vision-bridge/lib/index.js" 2>/dev/null || echo "注意: vision-bridge 未找到 developer-role 兼容处理"
+
+echo ""
+if [ "$FAIL" -ne 0 ]; then
+  echo "存在 FAIL/NOTE 项，请处理后重跑（源码已同步的 OK 项可忽略重复报错）。"
+  exit 1
+fi
+echo "完成。重启 dsh web 即可生效。"

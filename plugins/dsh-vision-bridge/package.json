@@ -11,8 +11,14 @@
     "lib",
     "README.md",
     "scripts",
-    "bin"
+    "bin",
+    "cordis.patch.yml"
   ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
   "license": "MIT",
   "peerDependencies": {
     "@deepseek-ai/dsh-llm": "^0.1.0-rc.6",

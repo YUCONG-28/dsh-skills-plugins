@@ -20,6 +20,11 @@
     "README.md",
     "LICENSE"
   ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
   "license": "MIT",
   "peerDependencies": {
     "@deepseek-ai/dsh-tools": "^0.1.0-rc.6",

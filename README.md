@@ -3,6 +3,18 @@
 个人 DeepSeek Harness（DSH）Skill 与插件集合 · Personal collection of DSH skills and plugins.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+<!-- 待 awesome-dsh-plugin 收录确认后启用：
+[![Awesome DSH Plugin](https://awesome-dsh-plugin.com/badge.svg)](https://awesome-dsh-plugin.com)
+-->
+
+## 发现性（Discoverability）
+
+本仓库按 DeepSeek Harness 官方生态约定打标：
+
+- **GitHub Topics**：`dsh-plugin`（[官方要求](https://github.com/deepseek-ai/deepseek-harness)）、`deepseek-harness`、`dsh`、`agent-skills`
+- **可发现性**：三个插件均声明 `dsh.bundle` manifest，可通过 `dsh plugin add` 标准安装（详见各插件 README）
+- **收录状态**：已准备 [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin) 投稿文件（见 [docs/awesome-submission/](docs/awesome-submission/)），收录确认后启用上方 badge
+- **插件市场**：可关注 [dsh-market](https://github.com/dsh-market/dsh-market)（聚合列表内插件的一键安装/升级市场）
 
 ## 目录结构
 
@@ -136,7 +148,20 @@ scripts/petctl.sh remiel start          # 启动桌宠
 - 新增 Skill：复制到 `skills/<name>/`（含 `SKILL.md`）提交即可；本地安装 `cp -R skills/<name> ~/.dsh/skills/`（DSH 自动发现，无需重启）。
 - 修改 `skills/markdown-math-writer/scripts/` 下脚本：同步更新 `package-lock.json` 并在本地 `npm install` 验证（`node_modules` 不入库）。
 - 本机实际安装状态与一致性核对见 [SUMMARY.md](SUMMARY.md)。
-- 注意：`plugins/dsh-vision-bridge` 的打包范围由 `package.json` 的 `files` 字段决定（当前为 `lib` / `README.md` / `scripts` / `bin`）；`plugins/dsh-web-pets` 的打包范围同理（`lib` / `assets` / `cordis.patch.yml` / `README.md` / `LICENSE`）。
+- **升级兼容**：升级前对照 [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)（上游 API 面矩阵）与 [docs/UPGRADE_RUNBOOK.md](docs/UPGRADE_RUNBOOK.md)（流程/回滚），版本基线记录在 [versions.lock.json](versions.lock.json)。
+- 注意：`plugins/dsh-vision-bridge` 的打包范围由 `package.json` 的 `files` 字段决定（当前为 `lib` / `README.md` / `scripts` / `bin` / `cordis.patch.yml`）；`plugins/dsh-web-pets` 的打包范围同理（`lib` / `assets` / `cordis.patch.yml` / `README.md` / `LICENSE`）。
+
+## Awesome List 投稿文案
+
+以下为提交 [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin) 用的一句话描述与分类（en / zh 双语文案，投稿 YAML 见 [docs/awesome-submission/](docs/awesome-submission/)）：
+
+| 插件 | 分类 | 一句话描述（en） | 一句话描述（zh） |
+| --- | --- | --- | --- |
+| `dsh-computer-use` | `tools` | macOS desktop control for agents: observe Accessibility trees and screenshots, click/type/key/scroll with per-app grants and one-time confirmations. | macOS 桌面操控：观察辅助功能树与截图，点击/输入/按键/滚动，带按应用授权与一次性确认。 |
+| `dsh-vision-bridge` | `vision` | Vision router for text-only models: Qwen VL captioning on image turns with local macOS Vision OCR fallback. | 视觉路由：纯文本主模型含图轮次自动交给 Qwen VL 识别，附本地 OCR 兜底。 |
+| `dsh-web-pets` | `fun` | A web pet living in the DSH browser UI that reacts to real session state, with a one-pet switcher in the dsh-web-ui pet panel. | Web 桌宠：随会话真实状态换表情，可在 dsh-web-ui 宠物入口一键切换。 |
+
+> 注：`markdown-math-writer` / `study-review` 为纯 SKILL.md 目录（复制到 `~/.dsh/skills/` 使用），暂不满足 awesome 列表「可 `dsh plugin add` 安装」门槛；如需收录可后续打包为 bundle 插件。
 
 ## 第三方插件（仅引用，不复制代码）
 
@@ -144,7 +169,7 @@ scripts/petctl.sh remiel start          # 启动桌宠
 
 | 插件 | 许可 | 上游 |
 |---|---|---|
-| `@linxin666/dsh-web-ui-all`（含 dsh-ssh / dsh-task-board / dsh-aionui-panel） | Apache-2.0 | https://github.com/zhu1090093659/dsh-web-ui |
+| `@linxin666/dsh-web-ui-all` 0.2.0（含 dsh-ssh / dsh-task-board / dsh-aionui-panel / dsh-git-graph / dsh-pet / dsh-skins / dsh-remote-web-ui / dsh-tool-describe-image / dsh-liangshen / dsh-client-ui-skill-explorer / dsh-better-sidebar；0.2.0 起移除 dsh-live-stats） | Apache-2.0 | https://github.com/zhu1090093659/dsh-web-ui |
 
 ## 许可
 

@@ -1,7 +1,7 @@
 # dsh-skills-plugins — 本地 Skill 与 Plugin 总览（SUMMARY）
 
 > 本文档汇总本机（macOS，dsh web profile）实际安装的 skills 与 plugins 及其与仓库的关系。
-> 更新日期：2026-08-17
+> 更新日期：2026-08-18（dsh-web-ui-all 0.2.0 基线）
 
 ## 一、Skills（`~/.dsh/skills/` 直接放置，非独立 git 仓库）
 
@@ -20,7 +20,7 @@ web profile `~/.dsh/profiles/web/package.json` 依赖（`file:` 引用本仓库�
 | `dsh-web-pets` | `plugins/dsh-web-pets/` | `~/.dsh/profiles/web/node_modules/dsh-web-pets` | Web 桌宠（浏览器内随会话状态换表情），service 依赖 `sessions` |
 | `dsh-computer-use` | `plugins/dsh-computer-use/` | `~/.dsh/profiles/web/node_modules/dsh-computer-use` | Computer Use：macOS 桌面观察与操作（11 个 computer_* 工具 + computer-use Skill + Swift 原生 helper）；需要辅助功能/屏幕录制权限 |
 | `dsh-desktop-pets` | `projects/desktop-pets/integration/dsh-plugin` | `~/.dsh/profiles/web/node_modules/dsh-desktop-pets` | macOS 桌面宠物插件（DSH 会话事件 → 桌宠状态通道） |
-| `@linxin666/dsh-web-ui-all` | 第三方 npm | `~/.dsh/profiles/web/node_modules/@linxin666/dsh-web-ui-all` | Web UI 全家桶（含 pet 界面入口），非本仓库维护 |
+| `@linxin666/dsh-web-ui-all` | 第三方 npm（0.2.0） | `~/.dsh/profiles/web/node_modules/@linxin666/dsh-web-ui-all` | Web UI 全家桶（含 pet 界面入口、ssh/task-board/git-graph/aionui-panel/skin-center/skill-explorer/better-sidebar），非本仓库维护；0.2.0 起移除 live-stats |
 
 ## 三、启用与同步机制
 
@@ -33,5 +33,8 @@ web profile `~/.dsh/profiles/web/package.json` 依赖（`file:` 引用本仓库�
 
 ## 四、当前状态
 
-- git：`main` 分支，与 `origin/main`（github.com/YUCONG-28/dsh-skills-plugins）同步，无未推送提交。
-- 本次变更：新增 `dsh-computer-use` 插件（阶段 1 核心：Swift helper + 11 个工具 + 安全模型 + Skill），本机 web profile 已启用（file: 依赖 + cordis.patch.yml insert）；`bin/cu-helper` 为本地编译产物（gitignore，架构相关）。
+- git：`main` 分支与 `origin/main`（github.com/YUCONG-28/dsh-skills-plugins）同步；GitHub topics：`dsh-plugin` / `deepseek-harness` / `dsh` / `agent-skills`。
+- `dsh-web-ui-all` 已升级 **0.2.0**（2026-08-18），新增 skill-explorer / better-sidebar，移除 live-stats；回归测试见 [docs/UPGRADE_CHECKLIST.md](docs/UPGRADE_CHECKLIST.md)。
+- 兼容性矩阵与升级手册见 [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)、[docs/UPGRADE_RUNBOOK.md](docs/UPGRADE_RUNBOOK.md)；版本基线见 [versions.lock.json](versions.lock.json)。
+- `plugins/dsh-computer-use`：`bin/cu-helper`、`memory/successes|trajectories`、`training/*` 等运行产物不入库（.gitignore）。
+- `dsh.bundle` manifest 已补齐：`dsh-computer-use`（真实 patch）/ `dsh-vision-bridge` / `dsh-desktop-pets`（占位 patch）。
