@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# apply-vision-patch.sh — 放宽 dsh-host-apiproxy 的图像准入预检
+# apply-vision-patch.sh —— 【已废弃 / DEPRECATED】旧式兜底脚本（默认 NO-OP，必须 --force）
 #
 # 背景：vision-bridge 的自动视觉路由（含图轮次→Qwen）需要图像能进入会话。
 # 但 dsh-host-apiproxy 在 发送图片(prompt) 与 切换模型(selectModel) 两个入口
@@ -12,8 +12,9 @@
 #   <pkg>/lib/types/api-proxy.js   —— 模块化源码（内部引用，一并保持一致性）
 #
 # 用法：
-#   ./apply-vision-patch.sh          应用补丁（幂等，可重复执行）
-#   ./apply-vision-patch.sh --revert 还原补丁
+#   ./apply-vision-patch.sh          打印废弃说明，退出 0（NO-OP，绝不修改任何文件）
+#   ./apply-vision-patch.sh --force  显式执行旧式补丁（legacy fallback，会修改 DSH 安装）
+#   ./apply-vision-patch.sh --revert 还原旧式补丁
 #
 # 注意：补丁作用于当前 dsh 安装——通过 profile 根 node_modules 的符号链接定位
 # （readlink 跟随），实际目标可能是 homebrew 全局安装
@@ -24,6 +25,20 @@
 set -euo pipefail
 
 MARKER='[vision-bridge:relaxed]'
+
+# ---------- 废弃门：默认 NO-OP，必须 --force 才执行 ----------
+if [ "${1:-}" != "--force" ]; then
+  cat <<'EOF'
+[vision-bridge] apply-vision-patch.sh 已废弃：新架构不需要任何 node_modules 补丁。
+  运行前置条件：无。请直接使用 vision-router / deepseek-v4-pro-vision 模型。
+  如需旧式兜底（会修改 DSH 安装），请显式运行: $0 --force
+EOF
+  exit 0
+fi
+# --force 之后，把参数交给下面的旧逻辑（去掉 --force）
+if [ "${1:-}" = "--force" ]; then
+  shift
+fi
 
 # 定位 @deepseek-ai/dsh-host-apiproxy（profile 根 node_modules 是指向实际安装的链接）
 PROFILE_ROOT="$HOME/.dsh/profiles/node_modules"

@@ -1,6 +1,19 @@
-# dsh-vision-bridge bundle patch（占位声明）
+# dsh-vision-bridge bundle patch（占位声明，v0.2+）
 #
-# 本插件的启用需要视觉模型配置（Qwen provider / model / mode），因此不在
-# bundle patch 中自动 insert，避免与 profile 中的手动配置行重复。
-# 启用方式：在 profile 的 cordis.patch.yml 中 insert 本插件并配置，
-# 详见 README.md「安装方法」。
+# v0.2+ 不再需要任何 DSH node_modules 补丁：
+#   - 使用 image-capable 虚拟 provider（vision-router / deepseek-v4-pro-vision）
+#     即可让官方图像准入正常通过；
+#   - bin/apply-vision-patch.sh 已废弃（默认 NO-OP，绝不自动运行）。
+#
+# 启用方式（与 v0.1 相同）：在 profile 的 cordis.patch.yml 中 insert 本插件，
+# 推荐配置见 README.md「安装方法」：
+#   - insert:
+#       - id: vision-bridge
+#         name: dsh-vision-bridge
+#         config:
+#           mode: auto
+#           visionProvider: qwen
+#           visionModel: qwen-vl-max
+#           deepseekProvider: deepseek-official
+#           deepseekModel: deepseek-v4-pro
+#   并在模型选择中选用 vision-router / deepseek-v4-pro-vision。

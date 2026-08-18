@@ -1,7 +1,7 @@
 {
   "name": "dsh-vision-bridge",
-  "version": "0.1.0",
-  "description": "DeepSeek Harness plugin: when the main (text-only) model receives images, automatically caption them with a Qwen VL model and let DeepSeek continue the task.",
+  "version": "0.2.0",
+  "description": "DeepSeek Harness plugin: image-capable virtual provider (vision-router) + OCR-first evidence routing, Apple Vision local OCR, structured evidence cache and fail-soft compatibility.",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
@@ -9,11 +9,27 @@
   },
   "files": [
     "lib",
-    "README.md",
+    "adapters",
+    "routing",
+    "ocr",
+    "providers",
+    "evidence",
+    "cache",
+    "telemetry",
+    "compat",
     "scripts",
     "bin",
+    "ci",
+    "docs",
+    "README.md",
     "cordis.patch.yml"
   ],
+  "scripts": {
+    "build:ocr": "bash scripts/build-ocr.sh",
+    "postinstall": "node scripts/install-ocr.mjs",
+    "test": "node --test test/",
+    "check": "node --check lib/index.js && node --check adapters/dsh.js && node --check lib/config.js"
+  },
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
@@ -21,7 +37,6 @@
   },
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/dsh-llm": "^0.1.0-rc.6",
     "@deepseek-ai/schemastery": "^3.18.1"
   }
 }

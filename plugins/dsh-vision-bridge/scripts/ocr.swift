@@ -137,6 +137,54 @@ func rewrite(_ path: String, _ outPath: String, rotate: Bool) {
     print("ok: \(outPath)")
 }
 
+
+/// Crop a rectangular region (source pixels) and write a re-encoded JPEG.
+func crop(_ path: String, _ outPath: String, _ x: Int, _ y: Int, _ w: Int, _ h: Int) {
+    let (cgImage, _) = readCGImage(path)
+    let rect = CGRect(x: CGFloat(x), y: CGFloat(y), width: CGFloat(w), height: CGFloat(h))
+        .intersection(CGRect(x: 0, y: 0, width: cgImage.width, height: cgImage.height))
+    guard rect.width > 1, rect.height > 1,
+          let cropped = cgImage.cropping(to: rect) else {
+        fail("crop region outside image or too small")
+    }
+    writeJPEG(cropped, outPath)
+}
+
+/// Downscale an image so its long edge is at most maxDim; writes a JPEG.
+func resize(_ path: String, _ outPath: String, _ maxDim: Int) {
+    guard maxDim > 0 else { fail("resize maxDim must be positive") }
+    let (cgImage, _) = readCGImage(path)
+    let w = cgImage.width, h = cgImage.height
+    let longEdge = max(w, h)
+    guard longEdge > maxDim else {
+        // already small enough: re-encode as-is
+        writeJPEG(cgImage, outPath)
+        return
+    }
+    let scale = Double(maxDim) / Double(longEdge)
+    let newW = max(1, Int((Double(w) * scale).rounded()))
+    let newH = max(1, Int((Double(h) * scale).rounded()))
+    guard let ctx = CGContext(
+        data: nil, width: newW, height: newH, bitsPerComponent: 8, bytesPerRow: 0,
+        space: CGColorSpaceCreateDeviceRGB(),
+        bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+    ) else { fail("cannot create resize context") }
+    ctx.interpolationQuality = .high
+    ctx.draw(cgImage, in: CGRect(x: 0, y: 0, width: newW, height: newH))
+    guard let scaled = ctx.makeImage() else { fail("resize failed") }
+    writeJPEG(scaled, outPath)
+}
+
+/// Re-encode a CGImage as JPEG (strips all EXIF/GPS metadata).
+func writeJPEG(_ image: CGImage, _ outPath: String) {
+    guard let dest = CGImageDestinationCreateWithURL(
+        URL(fileURLWithPath: outPath) as CFURL, "public.jpeg" as CFString, 1, nil
+    ) else { fail("cannot create destination") }
+    CGImageDestinationAddImage(dest, image, [kCGImageDestinationLossyCompressionQuality: 0.9] as CFDictionary)
+    guard CGImageDestinationFinalize(dest) else { fail("finalize failed") }
+    print("{\"ok\": true, \"out\": \"\(outPath)\"}")
+}
+
 let args = CommandLine.arguments
 guard args.count >= 2 else { fail("usage: ocr|orient|fix|strip ...") }
 
@@ -153,6 +201,12 @@ case "fix":
 case "strip":
     guard args.count >= 4 else { fail("usage: strip <in> <out>") }
     rewrite(args[2], args[3], rotate: false)
+case "crop":
+    guard args.count >= 7 else { fail("usage: crop <in> <out> x y w h") }
+    crop(args[2], args[3], Int(args[4]) ?? 0, Int(args[5]) ?? 0, Int(args[6]) ?? 0, Int(args[7]) ?? 0)
+case "resize":
+    guard args.count >= 5 else { fail("usage: resize <in> <out> maxDim") }
+    resize(args[2], args[3], Int(args[4]) ?? 0)
 default:
     fail("unknown subcommand: \(args[1])")
 }
