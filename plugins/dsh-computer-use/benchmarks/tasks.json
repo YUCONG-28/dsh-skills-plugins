@@ -1,0 +1,1015 @@
+{
+  "meta": {
+    "plugin_version": "0.1.0",
+    "created": "2026-08-17",
+    "environment": "macOS, DSH Computer Use (helper-driven baseline, no LLM)",
+    "notes": "Phase 0 Baseline：helper 传输层确定性执行基准（无 LLM 参与，llm_calls/input_tokens/output_tokens 为 0）。用于后续所有优化阶段的对比基准。任务只操作无害应用与 /tmp 临时文件，测试后全部清理。"
+  },
+  "tasks": [
+    {
+      "id": "open_terminal",
+      "name": "打开 Terminal",
+      "description": "打开 Terminal 应用并验证其窗口出现",
+      "actions": [
+        {
+          "type": "open_app",
+          "target": "Terminal"
+        },
+        {
+          "type": "dismiss_dialogs",
+          "app": "open_terminal"
+        },
+        {
+          "type": "wait",
+          "ms": 1500
+        },
+        {
+          "type": "assert_app_window",
+          "app": "Terminal"
+        }
+      ],
+      "cleanup": [
+        {
+          "type": "quit_app",
+          "app": "Terminal"
+        }
+      ]
+    },
+    {
+      "id": "open_textedit",
+      "name": "打开 TextEdit",
+      "description": "打开 TextEdit 并验证窗口出现（含可能的 Open 对话框处理）",
+      "actions": [
+        {
+          "type": "open_app",
+          "target": "TextEdit"
+        },
+        {
+          "type": "wait",
+          "ms": 2000
+        },
+        {
+          "type": "dismiss_dialogs",
+          "app": "open_textedit"
+        },
+        {
+          "type": "assert_app_window",
+          "app": "TextEdit"
+        },
+        {
+          "type": "new_document_if_dialog",
+          "app": "TextEdit"
+        }
+      ],
+      "cleanup": [
+        {
+          "type": "quit_app",
+          "app": "TextEdit"
+        }
+      ]
+    },
+    {
+      "id": "open_finder",
+      "name": "打开 Finder",
+      "description": "打开 Finder 并验证窗口出现",
+      "actions": [
+        {
+          "type": "open_app",
+          "target": "Finder"
+        },
+        {
+          "type": "wait",
+          "ms": 1500
+        },
+        {
+          "type": "assert_app_window",
+          "app": "Finder"
+        }
+      ],
+      "cleanup": [
+        {
+          "type": "quit_app",
+          "app": "Finder"
+        }
+      ]
+    },
+    {
+      "id": "open_calculator",
+      "name": "打开计算器",
+      "description": "打开计算器并验证窗口出现",
+      "actions": [
+        {
+          "type": "open_app",
+          "target": "Calculator"
+        },
+        {
+          "type": "wait",
+          "ms": 1500
+        },
+        {
+          "type": "assert_app_window",
+          "app": "Calculator"
+        }
+      ],
+      "cleanup": [
+        {
+          "type": "quit_app",
+          "app": "Calculator"
+        }
+      ]
+    },
+    {
+      "id": "open_vscode",
+      "name": "打开 VSCode",
+      "description": "打开 VSCode（若已安装）并验证窗口出现",
+      "prereq": {
+        "app_exists": "Visual Studio Code"
+      },
+      "actions": [
+        {
+          "type": "open_app",
+          "target": "Visual Studio Code"
+        },
+        {
+          "type": "wait",
+          "ms": 2500
+        },
+        {
+          "type": "assert_app_window",
+          "app": "Visual Studio Code"
+        }
+      ],
+      "cleanup": [
+        {
+          "type": "quit_app",
+          "app": "Visual Studio Code"
+        }
+      ]
+    },
+    {
+      "id": "open_safari",
+      "name": "打开 Safari",
+      "description": "打开 Safari 并验证窗口出现",
+      "actions": [
+        {
+          "type": "open_app",
+          "target": "Safari"
+        },
+        {
+          "type": "wait",
+          "ms": 2000
+        },
+        {
+          "type": "assert_app_window",
+          "app": "Safari"
+        }
+      ],
+      "cleanup": [
+        {
+          "type": "quit_app",
+          "app": "Safari"
+        }
+      ]
+    },
+    {
+      "id": "switch_window",
+      "name": "切换窗口（激活另一应用）",
+      "description": "依次激活 TextEdit 与 Terminal，验证前台应用切换",
+      "actions": [
+        {
+          "type": "open_app",
+          "target": "TextEdit"
+        },
+        {
+          "type": "wait",
+          "ms": 1500
+        },
+        {
+          "type": "assert_app_window",
+          "app": "TextEdit"
+        },
+        {
+          "type": "open_app",
+          "target": "Safari"
+        },
+        {
+          "type": "wait",
+          "ms": 1200
+        },
+        {
+          "type": "activate_app",
+          "target": "Safari"
+        },
+        {
+          "type": "wait",
+          "ms": 800
+        },
+        {
+          "type": "assert_frontmost",
+          "app": "Safari"
+        }
+      ],
+      "cleanup": [
+        {
+          "type": "quit_app",
+          "app": "TextEdit"
+        },
+        {
+          "type": "quit_app",
+          "app": "Safari"
+        }
+      ]
+    },
+    {
+      "id": "open_file_textedit",
+      "name": "打开指定文件（TextEdit）",
+      "description": "用 TextEdit 打开 /tmp 下的基准文件并验证窗口标题含文件名",
+      "actions": [
+        {
+          "type": "write_tmp_file",
+          "path": "/tmp/dsh-cu-bench-open.txt",
+          "content": "benchmark open file"
+        },
+        {
+          "type": "open_file_app",
+          "path": "/tmp/dsh-cu-bench-open.txt",
+          "app": "TextEdit"
+        },
+        {
+          "type": "wait",
+          "ms": 2000
+        },
+        {
+          "type": "dismiss_dialogs",
+          "app": "open_file_textedit"
+        },
+        {
+          "type": "assert_window_title_contains",
+          "app": "TextEdit",
+          "text": "dsh-cu-bench-open"
+        }
+      ],
+      "cleanup": [
+        {
+          "type": "quit_app",
+          "app": "TextEdit"
+        },
+        {
+          "type": "rm_file",
+          "path": "/tmp/dsh-cu-bench-open.txt"
+        }
+      ]
+    },
+    {
+      "id": "type_into_textedit",
+      "name": "向 TextEdit 输入文本（set-value 语义写入）",
+      "description": "新建文档 → 语义写入文本 → 验证 AX value 包含内容",
+      "actions": [
+        {
+          "type": "open_app",
+          "target": "TextEdit"
+        },
+        {
+          "type": "wait",
+          "ms": 1500
+        },
+        {
+          "type": "dismiss_dialogs",
+          "app": "type_into_textedit"
+        },
+        {
+          "type": "new_document_if_dialog",
+          "app": "TextEdit"
+        },
+        {
+          "type": "wait",
+          "ms": 500
+        },
+        {
+          "type": "find_element",
+          "app": "TextEdit",
+          "role": "AXTextArea",
+          "var": "text_area"
+        },
+        {
+          "type": "helper_set_value",
+          "pid_var": "app_pid",
+          "path_var": "text_area",
+          "value": "benchmark typed content 2026"
+        },
+        {
+          "type": "wait",
+          "ms": 400
+        },
+        {
+          "type": "assert_element_value_contains",
+          "app": "TextEdit",
+          "role": "AXTextArea",
+          "text": "benchmark typed content"
+        }
+      ],
+      "cleanup": [
+        {
+          "type": "quit_app",
+          "app": "TextEdit"
+        }
+      ]
+    },
+    {
+      "id": "click_dialog_button",
+      "name": "点击按钮（对话框 Cancel）",
+      "description": "Cmd+O 打开对话框 → 用 perform-action AXPress 点击 Cancel → 验证对话框关闭",
+      "actions": [
+        {
+          "type": "open_app",
+          "target": "TextEdit"
+        },
+        {
+          "type": "wait",
+          "ms": 1500
+        },
+        {
+          "type": "dismiss_dialogs",
+          "app": "click_dialog_button"
+        },
+        {
+          "type": "new_document_if_dialog",
+          "app": "TextEdit"
+        },
+        {
+          "type": "helper_press_key",
+          "pid_var": "app_pid",
+          "key": "o",
+          "modifiers": [
+            "command"
+          ],
+          "activate": true
+        },
+        {
+          "type": "wait",
+          "ms": 1200
+        },
+        {
+          "type": "assert_window_title_contains",
+          "app": "TextEdit",
+          "text": "Open"
+        },
+        {
+          "type": "find_button_in_window",
+          "app": "TextEdit",
+          "window_text": "Open",
+          "title": "Cancel",
+          "var": "cancel_btn"
+        },
+        {
+          "type": "helper_perform_action",
+          "pid_var": "app_pid",
+          "path_var": "cancel_btn",
+          "action": "AXPress"
+        },
+        {
+          "type": "wait",
+          "ms": 800
+        },
+        {
+          "type": "assert_no_window_title",
+          "app": "TextEdit",
+          "text": "Open"
+        }
+      ],
+      "cleanup": [
+        {
+          "type": "quit_app",
+          "app": "TextEdit"
+        }
+      ]
+    },
+    {
+      "id": "press_key_new_doc",
+      "name": "按键快捷键（Cmd+N 新建文档）",
+      "description": "在 TextEdit 中 Cmd+N 新建文档，验证窗口数增加",
+      "actions": [
+        {
+          "type": "open_app",
+          "target": "TextEdit"
+        },
+        {
+          "type": "wait",
+          "ms": 1500
+        },
+        {
+          "type": "dismiss_dialogs",
+          "app": "press_key_new_doc"
+        },
+        {
+          "type": "new_document_if_dialog",
+          "app": "TextEdit"
+        },
+        {
+          "type": "count_windows",
+          "app": "TextEdit",
+          "var": "win_before"
+        },
+        {
+          "type": "helper_press_key",
+          "pid_var": "app_pid",
+          "key": "n",
+          "modifiers": [
+            "command"
+          ],
+          "activate": true
+        },
+        {
+          "type": "wait",
+          "ms": 1000
+        },
+        {
+          "type": "assert_window_count_gt_poll",
+          "app": "TextEdit",
+          "var_before": "win_base"
+        }
+      ],
+      "cleanup": [
+        {
+          "type": "quit_app",
+          "app": "TextEdit"
+        }
+      ]
+    },
+    {
+      "id": "save_file_textedit",
+      "name": "保存文件（TextEdit Cmd+S）",
+      "description": "打开存储对话框 → set-value 文件名 → 验证文件名写入 → Esc 取消（TextEdit iCloud 对话框文件落盘验证受限，改为对话框级验证）",
+      "actions": [
+        {
+          "type": "open_app",
+          "target": "TextEdit"
+        },
+        {
+          "type": "wait",
+          "ms": 1500
+        },
+        {
+          "type": "dismiss_dialogs",
+          "app": "TextEdit"
+        },
+        {
+          "type": "new_window",
+          "app": "TextEdit"
+        },
+        {
+          "type": "find_element",
+          "app": "TextEdit",
+          "role": "AXTextArea",
+          "var": "text_area"
+        },
+        {
+          "type": "helper_set_value",
+          "pid_var": "app_pid",
+          "path_var": "text_area",
+          "value": "save me"
+        },
+        {
+          "type": "helper_press_key",
+          "pid_var": "app_pid",
+          "key": "s",
+          "modifiers": [
+            "command",
+            "shift"
+          ],
+          "activate": true
+        },
+        {
+          "type": "wait",
+          "ms": 1200
+        },
+        {
+          "type": "find_field",
+          "app": "TextEdit",
+          "role": "AXTextField",
+          "value": "Untitled",
+          "var": "name_field"
+        },
+        {
+          "type": "helper_set_value",
+          "pid_var": "app_pid",
+          "path_var": "name_field",
+          "value": "dsh-cu-bench-save.rtf"
+        },
+        {
+          "type": "wait",
+          "ms": 300
+        },
+        {
+          "type": "assert_field_value",
+          "var_field": "name_field",
+          "text": "dsh-cu-bench-save.rtf"
+        },
+        {
+          "type": "helper_press_key",
+          "pid_var": "app_pid",
+          "key": "escape",
+          "activate": true
+        }
+      ],
+      "cleanup": [
+        {
+          "type": "quit_app",
+          "app": "TextEdit"
+        }
+      ]
+    },
+    {
+      "id": "scroll_textedit",
+      "name": "滚动页面（perform-action AXScrollDownByPage）",
+      "description": "写入多行文本 → 滚动区域执行滚动 action → 验证滚动条位置变化",
+      "actions": [
+        {
+          "type": "open_app",
+          "target": "TextEdit"
+        },
+        {
+          "type": "wait",
+          "ms": 1500
+        },
+        {
+          "type": "dismiss_dialogs",
+          "app": "scroll_textedit"
+        },
+        {
+          "type": "new_document_if_dialog",
+          "app": "TextEdit"
+        },
+        {
+          "type": "new_window",
+          "app": "TextEdit"
+        },
+        {
+          "type": "find_element",
+          "app": "TextEdit",
+          "role": "AXTextArea",
+          "var": "text_area"
+        },
+        {
+          "type": "helper_set_value",
+          "pid_var": "app_pid",
+          "path_var": "text_area",
+          "value": "line1\nline2\nline3\nline4\nline5\nline6\nline7\nline8\nline9\nline10\nline11\nline12\nline13\nline14\nline15\nline16\nline17\nline18\nline19\nline20\nline21\nline22\nline23\nline24\nline25\nline26\nline27\nline28\nline29\nline30"
+        },
+        {
+          "type": "helper_click",
+          "pid_var": "app_pid",
+          "path_var": "text_area",
+          "prefer": "coordinate",
+          "activate": true
+        },
+        {
+          "type": "wait",
+          "ms": 400
+        },
+        {
+          "type": "helper_scroll",
+          "pid_var": "app_pid",
+          "direction": "down",
+          "amount": 3
+        },
+        {
+          "type": "wait",
+          "ms": 300
+        }
+      ],
+      "cleanup": [
+        {
+          "type": "quit_app",
+          "app": "TextEdit"
+        }
+      ]
+    },
+    {
+      "id": "close_window",
+      "name": "关闭窗口（Cmd+W）",
+      "description": "Cmd+N 新建后 Cmd+W 关闭，验证窗口数恢复",
+      "actions": [
+        {
+          "type": "open_app",
+          "target": "TextEdit"
+        },
+        {
+          "type": "wait",
+          "ms": 1500
+        },
+        {
+          "type": "dismiss_dialogs",
+          "app": "close_window"
+        },
+        {
+          "type": "new_document_if_dialog",
+          "app": "TextEdit"
+        },
+        {
+          "type": "count_windows",
+          "app": "TextEdit",
+          "var": "win_base"
+        },
+        {
+          "type": "helper_press_key",
+          "pid_var": "app_pid",
+          "key": "n",
+          "modifiers": [
+            "command"
+          ],
+          "activate": true
+        },
+        {
+          "type": "wait",
+          "ms": 900
+        },
+        {
+          "type": "assert_window_count_eq",
+          "app": "TextEdit",
+          "var_before": "win_base",
+          "delta": 1
+        },
+        {
+          "type": "helper_press_key",
+          "pid_var": "app_pid",
+          "key": "w",
+          "modifiers": [
+            "command"
+          ],
+          "activate": true
+        },
+        {
+          "type": "wait",
+          "ms": 900
+        },
+        {
+          "type": "assert_window_count_eq",
+          "app": "TextEdit",
+          "var_before": "win_base",
+          "delta": 0
+        }
+      ],
+      "cleanup": [
+        {
+          "type": "quit_app",
+          "app": "TextEdit"
+        }
+      ]
+    },
+    {
+      "id": "open_webpage_safari",
+      "name": "打开指定网页（Safari）",
+      "description": "用 Safari 打开 example.com 并验证窗口标题变化",
+      "actions": [
+        {
+          "type": "open_url",
+          "url": "https://example.com",
+          "app": "Safari"
+        },
+        {
+          "type": "wait",
+          "ms": 3000
+        },
+        {
+          "type": "assert_app_window",
+          "app": "Safari"
+        }
+      ],
+      "cleanup": [
+        {
+          "type": "quit_app",
+          "app": "Safari"
+        }
+      ]
+    },
+    {
+      "id": "run_python_terminal",
+      "name": "运行 Python（Terminal）",
+      "description": "在 Terminal 输入 python3 -c 命令并回车，验证无崩溃",
+      "actions": [
+        {
+          "type": "open_app",
+          "target": "Terminal"
+        },
+        {
+          "type": "wait",
+          "ms": 1800
+        },
+        {
+          "type": "dismiss_dialogs",
+          "app": "Terminal"
+        },
+        {
+          "type": "new_window",
+          "app": "Terminal"
+        },
+        {
+          "type": "wait",
+          "ms": 800
+        },
+        {
+          "type": "assert_app_window",
+          "app": "Terminal"
+        },
+        {
+          "type": "find_element",
+          "app": "Terminal",
+          "role": "AXTextArea",
+          "var": "term_area"
+        },
+        {
+          "type": "helper_type_text",
+          "pid_var": "app_pid",
+          "path_var": "term_area",
+          "text": "echo dsh-cu-bench-ok",
+          "activate": true
+        },
+        {
+          "type": "helper_press_key",
+          "pid_var": "app_pid",
+          "key": "return",
+          "activate": true
+        },
+        {
+          "type": "wait",
+          "ms": 800
+        }
+      ],
+      "cleanup": []
+    },
+    {
+      "id": "copy_paste_textedit",
+      "name": "复制粘贴（TextEdit 内 Cmd+C/V）",
+      "description": "set-value 写入 → Cmd+A 全选 → Cmd+C → 新文档 → Cmd+V → 验证粘贴内容（不读取系统剪贴板）",
+      "actions": [
+        {
+          "type": "open_app",
+          "target": "TextEdit"
+        },
+        {
+          "type": "wait",
+          "ms": 1500
+        },
+        {
+          "type": "dismiss_dialogs",
+          "app": "TextEdit"
+        },
+        {
+          "type": "new_window",
+          "app": "TextEdit"
+        },
+        {
+          "type": "find_element",
+          "app": "TextEdit",
+          "role": "AXTextArea",
+          "var": "text_area"
+        },
+        {
+          "type": "helper_set_value",
+          "pid_var": "app_pid",
+          "path_var": "text_area",
+          "value": "copy-paste-payload-xyz"
+        },
+        {
+          "type": "helper_click",
+          "pid_var": "app_pid",
+          "path_var": "text_area",
+          "prefer": "coordinate",
+          "activate": true
+        },
+        {
+          "type": "wait",
+          "ms": 400
+        },
+        {
+          "type": "helper_press_key",
+          "pid_var": "app_pid",
+          "key": "a",
+          "modifiers": [
+            "command"
+          ],
+          "activate": true
+        },
+        {
+          "type": "wait",
+          "ms": 300
+        },
+        {
+          "type": "helper_press_key",
+          "pid_var": "app_pid",
+          "key": "c",
+          "modifiers": [
+            "command"
+          ],
+          "activate": true
+        },
+        {
+          "type": "helper_press_key",
+          "pid_var": "app_pid",
+          "key": "n",
+          "modifiers": [
+            "command"
+          ],
+          "activate": true
+        },
+        {
+          "type": "wait",
+          "ms": 900
+        },
+        {
+          "type": "find_element",
+          "app": "TextEdit",
+          "role": "AXTextArea",
+          "var": "text_area2"
+        },
+        {
+          "type": "helper_click",
+          "pid_var": "app_pid",
+          "path_var": "text_area2",
+          "prefer": "coordinate",
+          "activate": true
+        },
+        {
+          "type": "wait",
+          "ms": 400
+        },
+        {
+          "type": "helper_press_key",
+          "pid_var": "app_pid",
+          "key": "v",
+          "modifiers": [
+            "command"
+          ],
+          "activate": true
+        },
+        {
+          "type": "wait",
+          "ms": 600
+        },
+        {
+          "type": "assert_any_value_contains",
+          "app": "TextEdit",
+          "text": "copy-paste-payload-xyz"
+        }
+      ],
+      "cleanup": [
+        {
+          "type": "quit_app",
+          "app": "TextEdit"
+        }
+      ]
+    },
+    {
+      "id": "open_notes",
+      "name": "打开备忘录",
+      "description": "打开备忘录并验证窗口出现",
+      "actions": [
+        {
+          "type": "open_app",
+          "target": "Notes"
+        },
+        {
+          "type": "wait",
+          "ms": 2000
+        },
+        {
+          "type": "assert_app_window",
+          "app": "Notes"
+        }
+      ],
+      "cleanup": [
+        {
+          "type": "quit_app",
+          "app": "Notes"
+        }
+      ]
+    },
+    {
+      "id": "open_system_settings",
+      "name": "打开系统设置",
+      "description": "打开系统设置并验证窗口出现",
+      "actions": [
+        {
+          "type": "open_app",
+          "target": "System Settings"
+        },
+        {
+          "type": "wait",
+          "ms": 2500
+        },
+        {
+          "type": "assert_app_window",
+          "app": "System Settings"
+        }
+      ],
+      "cleanup": [
+        {
+          "type": "quit_app",
+          "app": "System Settings"
+        }
+      ]
+    },
+    {
+      "id": "open_music",
+      "name": "打开音乐",
+      "description": "打开音乐应用并验证窗口出现",
+      "actions": [
+        {
+          "type": "open_app",
+          "target": "Music"
+        },
+        {
+          "type": "wait",
+          "ms": 2000
+        },
+        {
+          "type": "assert_app_window",
+          "app": "Music"
+        }
+      ],
+      "cleanup": [
+        {
+          "type": "quit_app",
+          "app": "Music"
+        }
+      ]
+    },
+    {
+      "id": "terminal_new_tab",
+      "name": "Terminal 新标签页（Cmd+T）",
+      "description": "Terminal Cmd+T 新建标签页，验证无异常",
+      "actions": [
+        {
+          "type": "open_app",
+          "target": "Terminal"
+        },
+        {
+          "type": "dismiss_dialogs",
+          "app": "terminal_new_tab"
+        },
+        {
+          "type": "wait",
+          "ms": 1800
+        },
+        {
+          "type": "assert_app_window",
+          "app": "Terminal"
+        },
+        {
+          "type": "helper_press_key",
+          "pid_var": "app_pid",
+          "key": "t",
+          "modifiers": [
+            "command"
+          ],
+          "activate": true
+        },
+        {
+          "type": "wait",
+          "ms": 800
+        }
+      ],
+      "cleanup": [
+        {
+          "type": "quit_app",
+          "app": "Terminal"
+        }
+      ]
+    },
+    {
+      "id": "observe_safari_tree",
+      "name": "观察 Safari 窗口 Accessibility 树",
+      "description": "打开 Safari 并获取其窗口元素树（observe 能力基准）",
+      "actions": [
+        {
+          "type": "open_app",
+          "target": "Safari"
+        },
+        {
+          "type": "wait",
+          "ms": 2000
+        },
+        {
+          "type": "assert_app_window",
+          "app": "Safari"
+        },
+        {
+          "type": "helper_observe",
+          "pid_var": "app_pid",
+          "var": "obs"
+        },
+        {
+          "type": "assert_observe_ok",
+          "var": "obs"
+        }
+      ],
+      "cleanup": [
+        {
+          "type": "quit_app",
+          "app": "Safari"
+        }
+      ]
+    }
+  ]
+}
