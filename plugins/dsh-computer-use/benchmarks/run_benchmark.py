@@ -550,6 +550,20 @@ def run_task(task):
                           error_code="skipped_prereq")
             result["wall_time_ms"] = int((time.time() - started) * 1000)
             return result
+    # 环境：TextEdit 窗口累积过多时窗口数类任务跳过（记录环境因素）
+    if prereq.get("max_windows"):
+        try:
+            pid = app_pid(prereq["max_windows"]["app"])
+            if pid is not None:
+                count = len(windows_of(pid))
+                if count > prereq["max_windows"]["limit"]:
+                    result.update(success=True,
+                                  error=f"skip: {prereq['max_windows']['app']} 窗口数 {count} 超过上限 {prereq['max_windows']['limit']}（环境累积）",
+                                  error_code="skipped_environment")
+                    result["wall_time_ms"] = int((time.time() - started) * 1000)
+                    return result
+        except BenchError:
+            pass
     # 输入法：非 ASCII 时依赖 ASCII 键盘的任务跳过（记录环境因素，不污染成功率）
     if task_needs_ascii_keyboard(task) and not input_method_ascii():
         result.update(success=True, error="skip: 非 ASCII 输入法（拼音），键盘输入任务跳过",
@@ -618,7 +632,7 @@ def main():
         print(f"  [{task['id']}] {task.get('name','')} ...", end=" ", flush=True)
         r = run_task(task)
         results.append(r)
-        if r["error_code"] in ("skipped_prereq", "skipped_input_method"):
+        if r["error_code"] in ("skipped_prereq", "skipped_input_method", "skipped_environment"):
             print(f"SKIP [{r['error_code']}]")
         elif r["success"]:
             print(f"OK ({r['wall_time_ms']}ms, {r['tool_calls']} helper calls)")
@@ -627,8 +641,8 @@ def main():
             print(f"FAIL [{code}] {r['error'][:80]}")
 
     # 汇总
-    ran = [r for r in results if r["error_code"] not in ("skipped_prereq", "skipped_input_method")]
-    skipped = [r for r in results if r["error_code"] in ("skipped_prereq", "skipped_input_method")]
+    ran = [r for r in results if r["error_code"] not in ("skipped_prereq", "skipped_input_method", "skipped_environment")]
+    skipped = [r for r in results if r["error_code"] in ("skipped_prereq", "skipped_input_method", "skipped_environment")]
     ok = [r for r in ran if r["success"]]
     print()
     print(f"== 结果: {len(ok)}/{len(ran)} 成功"

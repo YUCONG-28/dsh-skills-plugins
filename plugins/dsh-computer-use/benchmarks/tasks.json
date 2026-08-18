@@ -313,7 +313,13 @@
           "type": "quit_app",
           "app": "TextEdit"
         }
-      ]
+      ],
+      "prereq": {
+        "max_windows": {
+          "app": "TextEdit",
+          "limit": 15
+        }
+      }
     },
     {
       "id": "click_dialog_button",
@@ -382,7 +388,13 @@
           "type": "quit_app",
           "app": "TextEdit"
         }
-      ]
+      ],
+      "prereq": {
+        "max_windows": {
+          "app": "TextEdit",
+          "limit": 15
+        }
+      }
     },
     {
       "id": "press_key_new_doc",
@@ -434,7 +446,13 @@
           "type": "quit_app",
           "app": "TextEdit"
         }
-      ]
+      ],
+      "prereq": {
+        "max_windows": {
+          "app": "TextEdit",
+          "limit": 15
+        }
+      }
     },
     {
       "id": "save_file_textedit",
@@ -655,7 +673,13 @@
           "type": "quit_app",
           "app": "TextEdit"
         }
-      ]
+      ],
+      "prereq": {
+        "max_windows": {
+          "app": "TextEdit",
+          "limit": 15
+        }
+      }
     },
     {
       "id": "open_webpage_safari",
@@ -858,7 +882,13 @@
           "type": "quit_app",
           "app": "TextEdit"
         }
-      ]
+      ],
+      "prereq": {
+        "max_windows": {
+          "app": "TextEdit",
+          "limit": 15
+        }
+      }
     },
     {
       "id": "open_notes",
