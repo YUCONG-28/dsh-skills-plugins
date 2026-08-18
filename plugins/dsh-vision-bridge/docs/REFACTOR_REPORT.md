@@ -73,21 +73,21 @@
 
 ## 5. Benchmark
 
-| 路径 | 实测/预期 | 说明 |
+| 路径 | 实测 | 说明 |
 | --- | --- | --- |
-| 本地 OCR（编译二进制，真实截图 113 字符） | **~0.9s** | 含进程 spawn + Vision；后续调用略降 |
-| 缓存命中（L1/L2） | **<1ms** | 同图跨轮零延迟、零远程调用 |
-| 远程视觉（单图，结构化） | 未实测（无凭证） | 预期 2–10s，取决于 provider；batch 多图摊销 |
-| 整轮路由（强视觉） | 未实测（无凭证） | 与所选视觉模型首 token 延迟一致 |
-| 纯文本轮 | 与 DeepSeek 直连一致 | 无额外开销 |
+| 本地 OCR（编译二进制 + 插件 runOcr，真实截图 113 字符/20 行） | **417ms**（ROI 裁剪后 266ms） | 零 API 成本；进程 spawn 摊销后更稳 |
+| 缓存命中（L1/L2） | **<1ms** | 同图跨轮零延迟、零远程调用（单测验证） |
+| 远程视觉 Qwen VL（单图，结构化证据，真实凭证） | **8.6s**（1237 prompt tokens，其中 1112 image tokens） | 返回合法 structured JSON（summary + OCR 全文 80 字符） |
+| 整轮路由（强视觉） | 未单独实测 | 与所选视觉模型首 token 延迟一致 |
+| 纯文本轮（真实 DSH headless：vision-router → DeepSeek） | **1.3–2.2s** | telemetry 记录 route=backend / provider=deepseek-official |
 
-> 沙箱无法写入真实凭证；远程视觉延迟需在真实环境以 telemetry JSONL 复核。
+> 以上为 2026-08-18 本机实测（真实凭证、真实截图 smoke-shot.png）。远程视觉批量多图可进一步摊销延迟。
 
 ## 6. DSH 更新兼容测试结果
 
 | 目标 | 结果 |
 | --- | --- |
-| local（DSH 0.1.0-rc.7，本机 stable） | ✅ P6 审计、24/24 测试、import smoke、npm pack、**真实 `dsh web` 启动冒烟通过**（临时端口） |
+| local（DSH 0.1.0-rc.7，本机 stable） | ✅ P6 审计、24/24 测试、import smoke、npm pack、**真实 `dsh web` 启动冒烟通过**（临时端口）；**真实端到端**：headless 文本任务经 vision-router → DeepSeek 返回正确结果；真实 Qwen VL 结构化识别；真实本地 OCR |
 | latest（DSH 最新 release） | ⏳ 需在 CI 设 `DSH_LATEST_HOME` 后运行（脚本已支持） |
 | next/master | ⏳ 需在 CI 设 `DSH_NEXT_HOME` 后运行（脚本已支持） |
 
