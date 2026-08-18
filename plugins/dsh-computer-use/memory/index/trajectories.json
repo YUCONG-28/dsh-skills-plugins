@@ -194,6 +194,201 @@
       "success": true,
       "duration_ms": 2853,
       "created_at": "2026-08-18T09:47:27"
+    },
+    {
+      "id": "open_terminal-1787039338385-8169cb",
+      "task": "open_terminal",
+      "environment": {
+        "os": "Darwin",
+        "os_version": "25.5.0",
+        "app": "Terminal",
+        "window_title": ""
+      },
+      "success": true,
+      "duration_ms": 1780,
+      "created_at": "2026-08-18T09:48:58"
+    },
+    {
+      "id": "open_textedit-1787039341368-51e4c4",
+      "task": "open_textedit",
+      "environment": {
+        "os": "Darwin",
+        "os_version": "25.5.0",
+        "app": "TextEdit",
+        "window_title": ""
+      },
+      "success": true,
+      "duration_ms": 2982,
+      "created_at": "2026-08-18T09:49:01"
+    },
+    {
+      "id": "open_finder-1787039343655-147294",
+      "task": "open_finder",
+      "environment": {
+        "os": "Darwin",
+        "os_version": "25.5.0",
+        "app": "Finder",
+        "window_title": ""
+      },
+      "success": true,
+      "duration_ms": 2285,
+      "created_at": "2026-08-18T09:49:03"
+    },
+    {
+      "id": "open_calculator-1787039346004-468285",
+      "task": "open_calculator",
+      "environment": {
+        "os": "Darwin",
+        "os_version": "25.5.0",
+        "app": "Calculator",
+        "window_title": ""
+      },
+      "success": true,
+      "duration_ms": 2344,
+      "created_at": "2026-08-18T09:49:06"
+    },
+    {
+      "id": "open_vscode-1787039349247-48306e",
+      "task": "open_vscode",
+      "environment": {
+        "os": "Darwin",
+        "os_version": "25.5.0",
+        "app": "Visual Studio Code",
+        "window_title": ""
+      },
+      "success": true,
+      "duration_ms": 3233,
+      "created_at": "2026-08-18T09:49:09"
+    },
+    {
+      "id": "open_safari-1787039352092-4785c5",
+      "task": "open_safari",
+      "environment": {
+        "os": "Darwin",
+        "os_version": "25.5.0",
+        "app": "Safari",
+        "window_title": ""
+      },
+      "success": true,
+      "duration_ms": 2840,
+      "created_at": "2026-08-18T09:49:12"
+    },
+    {
+      "id": "switch_window-1787039363296-d51524",
+      "task": "switch_window",
+      "environment": {
+        "os": "Darwin",
+        "os_version": "25.5.0",
+        "app": "TextEdit",
+        "window_title": ""
+      },
+      "success": true,
+      "duration_ms": 11198,
+      "created_at": "2026-08-18T09:49:23"
+    },
+    {
+      "id": "open_file_textedit-1787039373126-b1fa49",
+      "task": "open_file_textedit",
+      "environment": {
+        "os": "Darwin",
+        "os_version": "25.5.0",
+        "app": "",
+        "window_title": ""
+      },
+      "success": true,
+      "duration_ms": 9823,
+      "created_at": "2026-08-18T09:49:33"
+    },
+    {
+      "id": "scroll_textedit-1787039379239-f54bb4",
+      "task": "scroll_textedit",
+      "environment": {
+        "os": "Darwin",
+        "os_version": "25.5.0",
+        "app": "TextEdit",
+        "window_title": ""
+      },
+      "success": true,
+      "duration_ms": 5563,
+      "created_at": "2026-08-18T09:49:39"
+    },
+    {
+      "id": "open_webpage_safari-1787039383673-2689f1",
+      "task": "open_webpage_safari",
+      "environment": {
+        "os": "Darwin",
+        "os_version": "25.5.0",
+        "app": "",
+        "window_title": ""
+      },
+      "success": true,
+      "duration_ms": 4196,
+      "created_at": "2026-08-18T09:49:43"
+    },
+    {
+      "id": "open_notes-1787039386680-4440ca",
+      "task": "open_notes",
+      "environment": {
+        "os": "Darwin",
+        "os_version": "25.5.0",
+        "app": "Notes",
+        "window_title": ""
+      },
+      "success": true,
+      "duration_ms": 2772,
+      "created_at": "2026-08-18T09:49:46"
+    },
+    {
+      "id": "open_system_settings-1787039390254-aa2172",
+      "task": "open_system_settings",
+      "environment": {
+        "os": "Darwin",
+        "os_version": "25.5.0",
+        "app": "System Settings",
+        "window_title": ""
+      },
+      "success": true,
+      "duration_ms": 3566,
+      "created_at": "2026-08-18T09:49:50"
+    },
+    {
+      "id": "open_music-1787039393013-28c36b",
+      "task": "open_music",
+      "environment": {
+        "os": "Darwin",
+        "os_version": "25.5.0",
+        "app": "Music",
+        "window_title": ""
+      },
+      "success": true,
+      "duration_ms": 2753,
+      "created_at": "2026-08-18T09:49:53"
+    },
+    {
+      "id": "terminal_new_tab-1787039396387-c14960",
+      "task": "terminal_new_tab",
+      "environment": {
+        "os": "Darwin",
+        "os_version": "25.5.0",
+        "app": "Terminal",
+        "window_title": ""
+      },
+      "success": true,
+      "duration_ms": 3364,
+      "created_at": "2026-08-18T09:49:56"
+    },
+    {
+      "id": "observe_safari_tree-1787039399153-21ec8e",
+      "task": "observe_safari_tree",
+      "environment": {
+        "os": "Darwin",
+        "os_version": "25.5.0",
+        "app": "Safari",
+        "window_title": ""
+      },
+      "success": true,
+      "duration_ms": 2760,
+      "created_at": "2026-08-18T09:49:59"
     }
   ]
 }

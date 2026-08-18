@@ -32,6 +32,7 @@ PLUGIN_ROOT = Path(__file__).resolve().parent.parent
 HELPER = PLUGIN_ROOT / "bin" / "cu-helper"
 sys.path.insert(0, str(PLUGIN_ROOT))
 from memory.store import MemoryStore, make_trajectory  # noqa: E402
+from memory.classifier import classify  # noqa: E402
 
 MEMORY = MemoryStore(PLUGIN_ROOT / "memory")
 DEFAULT_TASKS = Path(__file__).resolve().parent / "tasks.json"
@@ -654,6 +655,12 @@ def main():
                     vision_calls=r.get("vision_calls", 0),
                     screenshots=r.get("screenshots", 0),
                 )
+                if not r["success"]:
+                    # Phase 6：失败自动分类并附加到轨迹
+                    cls = classify(error_code=r.get("error_code", ""),
+                                   error_text=r.get("error", ""),
+                                   action_type=task.get("actions", [{}])[0].get("type", "") if task.get("actions") else "")
+                    traj["failure_classification"] = cls
                 MEMORY.save_trajectory(traj)
         except Exception:  # noqa: BLE001
             pass
