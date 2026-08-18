@@ -29,3 +29,9 @@ plugins/dsh-computer-use/training/cleaned/*
 plugins/dsh-computer-use/training/positive/*
 plugins/dsh-computer-use/training/negative/*
 plugins/dsh-computer-use/training/preference/*
+
+# dsh-computer-use 运行产物（每次自学习/测试持续生成，不入库）
+plugins/dsh-computer-use/bin/*.png
+plugins/dsh-computer-use/memory/successes/*
+plugins/dsh-computer-use/memory/trajectories/*
+plugins/dsh-computer-use/memory/index/*.json
