@@ -570,7 +570,7 @@ function apply(ctx, config = {}) {
 						observationId: { type: 'string' },
 						treeText: { type: 'string' },
 						app: { type: 'object', additionalProperties: true },
-						screenshot: { type: ['object', 'null'], additionalProperties: true },
+						screenshot: { type: 'object', additionalProperties: true },
 						observation: { type: 'object', additionalProperties: true },
 					},
 				},

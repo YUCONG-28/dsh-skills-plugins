@@ -119,7 +119,7 @@ func rotateDegrees(_ image: CGImage, _ degrees: Int) -> CGImage? {
 
 /// 重编码（剥离 EXIF），可选先旋转
 func rewrite(_ path: String, _ outPath: String, rotate: Bool) {
-    let (cgImage, orientation) = readCGImage(path)
+    let (cgImage, _) = readCGImage(path)
     var final = cgImage
     if rotate {
         let deg = rotationFor(exifOrientationValue(path))
