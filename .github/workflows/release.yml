@@ -1,0 +1,57 @@
+name: Release dsh-web-pets
+
+on:
+  push:
+    tags:
+      - 'web-pets-v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build, test, pack & publish
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: plugins/dsh-web-pets
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: 'https://registry.npmjs.org'
+          cache: pnpm
+          cache-dependency-path: plugins/dsh-web-pets/pnpm-lock.yaml
+
+      - name: Install & test
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm test
+
+      - name: Pack tarball + SHA256
+        run: |
+          mkdir -p dist
+          pnpm pack --pack-destination dist
+          TARBALL=$(ls dist/dsh-web-pets-*.tgz)
+          shasum -a 256 "$TARBALL" | awk '{print $1"  "$2}' > dist/SHA256SUMS.txt
+          echo "TARBALL=$TARBALL" >> "$GITHUB_ENV"
+
+      - name: Publish to npm (if token present)
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public --provenance || echo "NPM_TOKEN not configured; skipped publish"
+        continue-on-error: true
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#web-pets-v}"
+          NOTES=$(awk '/^## v'"$VERSION"'/{flag=1;next}/^## /{if(flag)exit}flag' CHANGELOG.md)
+          gh release create "$GITHUB_REF_NAME"             dist/dsh-web-pets-*.tgz             dist/SHA256SUMS.txt             --title "dsh-web-pets v$VERSION"             --notes "${NOTES:-dsh-web-pets v$VERSION}"

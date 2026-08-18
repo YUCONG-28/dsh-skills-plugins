@@ -1,6 +1,6 @@
 {
   "name": "dsh-web-pets",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "DSH Web 桌宠插件：浏览器里养一只随会话状态换表情的桌宠（内置 demo/remiel），支持随时切换或替换宠物形象；自带设置面板、一键更新与反馈入口",
   "type": "module",
   "main": "lib/index.js",
@@ -23,7 +23,8 @@
   "scripts": {
     "generate": "node scripts/generate-art.mjs",
     "build": "pnpm generate && tsdown",
-    "test": "pnpm build && node --test test/host.test.mjs test/client.test.mjs"
+    "test": "pnpm build && node --test test/host.test.mjs test/client.test.mjs",
+    "release": "node scripts/release-web-pets.mjs"
   },
   "dsh": {
     "bundle": {
@@ -40,6 +41,26 @@
     }
   },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/YUCONG-28/dsh-skills-plugins.git",
+    "directory": "plugins/dsh-web-pets"
+  },
+  "homepage": "https://github.com/YUCONG-28/dsh-skills-plugins/tree/main/plugins/dsh-web-pets",
+  "bugs": {
+    "url": "https://github.com/YUCONG-28/dsh-skills-plugins/issues"
+  },
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "plugin",
+    "web-pet",
+    "desktop-pet",
+    "dsh-plugin"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "peerDependencies": {
     "@deepseek-ai/dsh-client-connection": "^0.1.0-rc.6",
     "@deepseek-ai/dsh-client-locale": "^0.1.0-rc.6",

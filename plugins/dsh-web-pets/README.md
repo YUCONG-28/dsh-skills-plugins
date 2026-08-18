@@ -24,15 +24,34 @@
 
 ## 安装
 
-插件遵循 dsh 官方插件形态（`package.json` 的 `dsh.bundle.patch` / `dsh.client` 声明 + `cordis.patch.yml`），两种安装方式任选：
+插件遵循 dsh 官方插件形态（`package.json` 的 `dsh.bundle.patch` / `dsh.client` 声明 + `cordis.patch.yml`），以下安装方式任选：
 
-### 方式一：`dsh plugin add link:…`（推荐）
+### 方式一：npm 安装（推荐，快速使用）
+
+```bash
+dsh plugin --profile web add dsh-web-pets
+# 或：在 profile 的 package.json 加依赖后 pnpm install
+```
+
+安装后重启 `dsh web`。更新可用设置面板「更新」一键 `pnpm update`。
+
+### 方式二：GitHub Release tarball（离线/兜底）
+
+从 [Releases](https://github.com/YUCONG-28/dsh-skills-plugins/releases) 下载 `dsh-web-pets-<版本>.tgz` 与 `SHA256SUMS.txt`，校验后：
+
+```bash
+dsh plugin --profile web add file:/path/to/dsh-web-pets-<版本>.tgz
+```
+
+> tarball 安装形态**只提示新版本、不自动更新**，请到 Release 下载新 tarball 重新安装。
+
+### 方式三：monorepo `link:` 安装（开发/源码）
 
 ```bash
 dsh plugin --profile web add link:/path/to/dsh-skills-plugins/plugins/dsh-web-pets
 ```
 
-`cordis.patch.yml` 会自动把插件行插入 profile 的插件名单（`id: web-pets`）。
+`cordis.patch.yml` 会自动把插件行插入 profile 的插件名单（`id: web-pets`）。link 形态可在设置面板一键 `git pull` + `fix-web-profile.sh`。
 
 ### 方式二：`file:` 依赖 + 手工补丁
 
@@ -72,6 +91,12 @@ pnpm test           # 构建 + node:test 单元测试（14 例）
 - 插件加载后 `curl http://127.0.0.1:<port>/api/web-pets/state` 应返回 JSON 状态（含 `version`）。
 - `curl http://127.0.0.1:<port>/api/web-pets/info` 返回安装形态与更新命令。
 - 素材可达：`curl -I http://127.0.0.1:<port>/web-pets-assets/demo/emotes/demo_1.gif`。
+
+## 发布
+
+- 维护者一键发版：`cd plugins/dsh-web-pets && pnpm release -- patch|minor|major`（执行 `scripts/release-web-pets.mjs`：bump → build → test → npm pack + SHA256 → git commit/tag → GitHub Release → push）。
+- CI：`.github/workflows/ci.yml`（push/PR 自动 build+test）；`.github/workflows/release.yml`（推送 `web-pets-v*` tag 时自动构建、测试、打 tarball+SHA256、发布 npm、创建 GitHub Release）。
+- 更新检查：`/api/web-pets/check` 按 `web-pets-v*` 前缀过滤本插件 Release（携带 release notes），避免 monorepo 其它插件干扰。
 
 ## 使用
 

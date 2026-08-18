@@ -55,7 +55,7 @@ window.__ModuleLoader__.load({
 		/**
 		* Generated current version (from package.json). Do not edit by hand.
 		*/
-		const PET_VERSION = "0.2.1";
+		const PET_VERSION = "0.2.2";
 		//#endregion
 		//#region src/client/index.ts
 		/**
@@ -222,6 +222,8 @@ window.__ModuleLoader__.load({
 				"settings.checkFailed": "检查更新失败",
 				"settings.notChecked": "尚未检查",
 				"settings.linkOnly": "仅 monorepo link 安装支持一键更新",
+				"settings.npmHint": "npm 安装：可一键 pnpm update 后重启 dsh web 生效。",
+				"settings.tarballHint": "tarball/file 安装：请到 GitHub Release 下载新版本重新安装（不自动更新）。",
 				"settings.repo": "仓库",
 				"settings.feedbackBtn": "提交反馈",
 				"settings.feedbackDesc": "遇到问题或有建议？欢迎反馈，帮助改善桌宠。",
@@ -278,6 +280,8 @@ window.__ModuleLoader__.load({
 				"settings.checkFailed": "Update check failed",
 				"settings.notChecked": "Not checked yet",
 				"settings.linkOnly": "One-click update needs a monorepo link install",
+				"settings.npmHint": "npm install: one-click pnpm update, then restart dsh web.",
+				"settings.tarballHint": "tarball/file install: download the new release from GitHub and reinstall (no auto-update).",
 				"settings.repo": "Repository",
 				"settings.feedbackBtn": "Submit feedback",
 				"settings.feedbackDesc": "Found a problem or have a suggestion? Feedback is welcome.",
@@ -911,7 +915,7 @@ window.__ModuleLoader__.load({
 						return false;
 					}
 					updInfo = info;
-					const current = info.current || "0.2.1";
+					const current = info.current || "0.2.2";
 					if (!semverGtClient(info.latest.replace(/^web-pets-v/, ""), current)) {
 						if (force) showToast(t("settings.noUpdate"));
 						return false;
@@ -1184,7 +1188,7 @@ window.__ModuleLoader__.load({
 					status.style.flex = "1";
 					status.style.textAlign = "right";
 					status.style.fontSize = "12px";
-					const hasUpdate = updInfo !== null && semverGtClient(updInfo.latest.replace(/^web-pets-v/, ""), "0.2.1");
+					const hasUpdate = updInfo !== null && semverGtClient(updInfo.latest.replace(/^web-pets-v/, ""), "0.2.2");
 					if (hasUpdate) status.textContent = t("settings.hasUpdate") + " " + updInfo.latest;
 					else if (updChecked && updInfo === null) status.textContent = updNetworkHint || t("settings.checkFailed");
 					else if (updChecked) status.textContent = t("settings.noUpdate");
@@ -1192,8 +1196,12 @@ window.__ModuleLoader__.load({
 					row.appendChild(status);
 					const btn = document.createElement("button");
 					btn.className = "dwp-btn" + (hasUpdate ? " primary" : "");
-					btn.textContent = hasUpdate ? t("upd.update") : t("settings.check");
+					btn.textContent = hasUpdate ? installMode === "tarball" ? t("upd.openRelease") : t("upd.update") : t("settings.check");
 					btn.addEventListener("click", async () => {
+						if (hasUpdate && installMode === "tarball") {
+							if (updInfo) window.open(updInfo.htmlUrl, "_blank");
+							return;
+						}
 						if (hasUpdate) {
 							btn.disabled = true;
 							btn.textContent = t("settings.updating");
@@ -1213,7 +1221,7 @@ window.__ModuleLoader__.load({
 					pane.appendChild(row);
 					const hint = document.createElement("div");
 					hint.className = "dwp-upd-hint";
-					hint.textContent = installMode === "link" ? t("settings.updateHint") : t("settings.linkOnly");
+					hint.textContent = installMode === "link" ? t("settings.updateHint") : installMode === "npm" ? t("settings.npmHint") : t("settings.tarballHint");
 					pane.appendChild(hint);
 				} else {
 					pane.appendChild(sectionEl(t("settings.feedback")));
@@ -1222,7 +1230,7 @@ window.__ModuleLoader__.load({
 					desc.textContent = t("settings.feedbackDesc");
 					pane.appendChild(desc);
 					pane.appendChild(buttonRow(t("settings.feedbackBtn"), () => {
-						window.open("https://github.com/YUCONG-28/dsh-skills-plugins/issues/new?title=" + encodeURIComponent("[dsh-web-pets] 反馈") + "&body=%E7%89%88%E6%9C%AC%3A%200.2.1%0A%0A%E6%8F%8F%E8%BF%B0%EF%BC%9A", "_blank");
+						window.open("https://github.com/YUCONG-28/dsh-skills-plugins/issues/new?title=" + encodeURIComponent("[dsh-web-pets] 反馈") + "&body=%E7%89%88%E6%9C%AC%3A%200.2.2%0A%0A%E6%8F%8F%E8%BF%B0%EF%BC%9A", "_blank");
 					}));
 					const repoRow = document.createElement("div");
 					repoRow.className = "dwp-settings-row";

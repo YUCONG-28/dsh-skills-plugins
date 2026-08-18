@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.2.2 (2026-08-18)
+
+- 发布体系：npm 包（`dsh-web-pets`）、GitHub Release（tarball + SHA256）、CI/CD（ci.yml / release.yml）。
+- 更新检查改为按 `web-pets-v*` 前缀过滤 Release（携带 release notes），避免 monorepo 其它插件干扰。
+- `/api/web-pets/update` 识别 link / npm / tarball 三种安装形态：link 走 git pull + fix 脚本、npm 走 pnpm update、tarball 仅提示到 Release 下载。
+- 一键发版脚本 `pnpm release -- patch|minor|major`。
+
 ## v0.2.1 (2026-08-18)
 
 - 修复：react-dom 被重复打包导致的客户端崩溃风险（`neverBundle` 增加 `react-dom`，`react-dom/client` 改用 namespace import）。

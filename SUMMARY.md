@@ -17,7 +17,7 @@ web profile `~/.dsh/profiles/web/package.json` 依赖（`file:` 引用本仓库�
 | 插件 | 仓库位置 | 安装副本 | 说明 |
 | --- | --- | --- | --- |
 | `dsh-vision-bridge` | `plugins/dsh-vision-bridge/` | `~/.dsh/profiles/web/node_modules/dsh-vision-bridge` | 自动视觉路由 + 结构化转述 + 本地 OCR（macOS Vision）+ 故障转移；md5 与安装副本一致 |
-| `dsh-web-pets` | `plugins/dsh-web-pets/` | `~/.dsh/profiles/web/node_modules/dsh-web-pets` | Web 桌宠（浏览器内随会话状态换表情，v0.2.1：TS+tsdown 工程、设置面板、一键更新），service 依赖 `sessions` |
+| `dsh-web-pets` | `plugins/dsh-web-pets/` | `~/.dsh/profiles/web/node_modules/dsh-web-pets` | Web 桌宠（浏览器内随会话状态换表情，v0.2.2：TS+tsdown 工程、设置面板、一键更新），service 依赖 `sessions` |
 | `dsh-computer-use` | `plugins/dsh-computer-use/` | `~/.dsh/profiles/web/node_modules/dsh-computer-use` | Computer Use：macOS 桌面观察与操作（11 个 computer_* 工具 + computer-use Skill + Swift 原生 helper）；需要辅助功能/屏幕录制权限 |
 | `dsh-desktop-pets` | `projects/desktop-pets/integration/dsh-plugin` | `~/.dsh/profiles/web/node_modules/dsh-desktop-pets` | macOS 桌面宠物插件（DSH 会话事件 → 桌宠状态通道） |
 | `@linxin666/dsh-web-ui-all` | 第三方 npm（0.2.0） | `~/.dsh/profiles/web/node_modules/@linxin666/dsh-web-ui-all` | Web UI 全家桶（含 pet 界面入口、ssh/task-board/git-graph/aionui-panel/skin-center/skill-explorer/better-sidebar），非本仓库维护；0.2.0 起移除 live-stats |
@@ -37,5 +37,5 @@ web profile `~/.dsh/profiles/web/package.json` 依赖（`file:` 引用本仓库�
 - `dsh-web-ui-all` 已升级 **0.2.0**（2026-08-18），新增 skill-explorer / better-sidebar，移除 live-stats；回归测试见 [docs/UPGRADE_CHECKLIST.md](docs/UPGRADE_CHECKLIST.md)。
 - 兼容性矩阵与升级手册见 [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)、[docs/UPGRADE_RUNBOOK.md](docs/UPGRADE_RUNBOOK.md)；版本基线见 [versions.lock.json](versions.lock.json)。
 - `plugins/dsh-computer-use`：`bin/cu-helper`、`memory/successes|trajectories`、`training/*` 等运行产物不入库（.gitignore）。
-- `plugins/dsh-web-pets`（v0.2.1）：TS + tsdown 构建（`src/host|client` → `lib/`），内置宠物素材 data-URI 内联，新增设置面板 / 自更新（`/api/web-pets/info|check|update`）/ DOM 增强信号（默认关闭）；单元测试 `pnpm test`（14 例）。
+- `plugins/dsh-web-pets`（v0.2.2）：TS + tsdown 构建（`src/host|client` → `lib/`），内置宠物素材 data-URI 内联，新增设置面板 / 自更新（`/api/web-pets/info|check|update`）/ DOM 增强信号（默认关闭）；单元测试 `pnpm test`（14 例）。
 - `dsh.bundle` manifest 已补齐：`dsh-computer-use`（真实 patch）/ `dsh-vision-bridge` / `dsh-desktop-pets`（占位 patch）。

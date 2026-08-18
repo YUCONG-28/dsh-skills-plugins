@@ -93,10 +93,14 @@ bash plugins/dsh-vision-bridge/bin/apply-vision-patch.sh
 ### 插件：dsh-web-pets（Web 桌宠）
 
 ```bash
-# 方式一：dsh plugin add link:…（自动处理 cordis.patch.yml）
-dsh plugin --profile web add link:$(pwd)/plugins/dsh-web-pets
+# 方式一：npm 安装（推荐，快速使用）
+dsh plugin --profile web add dsh-web-pets
 
-# 方式二：file: 依赖 + 手工在 profile 的 cordis.patch.yml 加 insert 行（id: web-pets）
+# 方式二：GitHub Release tarball（离线/兜底）
+dsh plugin --profile web add file:/path/to/dsh-web-pets-<版本>.tgz
+
+# 方式三：monorepo link:（开发/源码）
+dsh plugin --profile web add link:$(pwd)/plugins/dsh-web-pets
 ```
 
 安装后重启 `dsh web`。**并入 dsh-web-ui 的宠物入口**：先装 dsh-web-ui（含鲸鱼宠物 dsh-pet）再装本插件，设置 → Web UI 插件 → 宠物区域出现「宠物选择」卡片，可在鲸鱼娘（上游）/ 豆豆 / 雷米埃尔 / 自定义宠物间切换，**任意时刻只显示一只宠物**；仅装本插件时则是一只独立悬浮宠（右下角）+ 右键菜单（缩放/透明度/锁定/暂停/重置/镜像/切换/隐藏）+ **设置面板**（外观 / 行为 / 更新 / 反馈四栏）。替换/新增宠物形象：往 `plugins/dsh-web-pets/assets/pets/<名字>/` 放 `pet.json` + `emotes/` 即可（详见插件 README）。
@@ -108,9 +112,10 @@ cd plugins/dsh-web-pets
 pnpm install        # 安装 tsdown 等 devDependencies
 pnpm build          # 重新生成素材 data-URI（scripts/generate-art.mjs）+ tsdown 构建 lib/
 pnpm test           # 构建 + node:test 单元测试
+pnpm release -- patch|minor|major   # 一键发版（bump→test→pack→tag→Release→push）
 ```
 
-**自更新闭环**（monorepo link 安装形态）：设置面板「更新」栏可自动检查 GitHub 新版本，发现新版本后一键执行 `git pull --ff-only` + `bash fix-web-profile.sh`（仅接受本机请求，带 120s 超时）。
+**更新闭环**：设置面板「更新」栏自动检查 GitHub Release（按 `web-pets-v*` 前缀过滤），发现新版本后按安装形态更新——npm 形态 `pnpm update`；link 形态 `git pull --ff-only` + `bash fix-web-profile.sh`；tarball 形态仅提示到 Release 下载（不自动更新）。CI：push/PR 跑 `ci.yml`，推送 `web-pets-v*` tag 跑 `release.yml`（build/test/npm pack+npm publish+GitHub Release）。
 
 ### 插件：dsh-computer-use（Computer Use）
 

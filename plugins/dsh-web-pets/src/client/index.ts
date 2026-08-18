@@ -180,6 +180,8 @@ import { PET_VERSION } from './version.generated'
 				"settings.checkFailed": "检查更新失败",
 				"settings.notChecked": "尚未检查",
 				"settings.linkOnly": "仅 monorepo link 安装支持一键更新",
+				"settings.npmHint": "npm 安装：可一键 pnpm update 后重启 dsh web 生效。",
+				"settings.tarballHint": "tarball/file 安装：请到 GitHub Release 下载新版本重新安装（不自动更新）。",
 				"settings.repo": "仓库",
 				"settings.feedbackBtn": "提交反馈",
 				"settings.feedbackDesc": "遇到问题或有建议？欢迎反馈，帮助改善桌宠。",
@@ -236,6 +238,8 @@ import { PET_VERSION } from './version.generated'
 				"settings.checkFailed": "Update check failed",
 				"settings.notChecked": "Not checked yet",
 				"settings.linkOnly": "One-click update needs a monorepo link install",
+				"settings.npmHint": "npm install: one-click pnpm update, then restart dsh web.",
+				"settings.tarballHint": "tarball/file install: download the new release from GitHub and reinstall (no auto-update).",
 				"settings.repo": "Repository",
 				"settings.feedbackBtn": "Submit feedback",
 				"settings.feedbackDesc": "Found a problem or have a suggestion? Feedback is welcome.",
@@ -1234,8 +1238,12 @@ export function apply(ctx) {
 					row.appendChild(status);
 					const btn = document.createElement("button");
 					btn.className = "dwp-btn" + (hasUpdate ? " primary" : "");
-					btn.textContent = hasUpdate ? t("upd.update") : t("settings.check");
+					btn.textContent = hasUpdate ? (installMode === "tarball" ? t("upd.openRelease") : t("upd.update")) : t("settings.check");
 					btn.addEventListener("click", async () => {
+						if (hasUpdate && installMode === "tarball") {
+							if (updInfo) window.open(updInfo.htmlUrl, "_blank");
+							return;
+						}
 						if (hasUpdate) {
 							btn.disabled = true;
 							btn.textContent = t("settings.updating");
@@ -1255,7 +1263,7 @@ export function apply(ctx) {
 					pane.appendChild(row);
 					const hint = document.createElement("div");
 					hint.className = "dwp-upd-hint";
-					hint.textContent = installMode === "link" ? t("settings.updateHint") : t("settings.linkOnly");
+					hint.textContent = installMode === "link" ? t("settings.updateHint") : installMode === "npm" ? t("settings.npmHint") : t("settings.tarballHint");
 					pane.appendChild(hint);
 				} else {
 					pane.appendChild(sectionEl(t("settings.feedback")));

@@ -69,6 +69,7 @@ const REPO = 'YUCONG-28/dsh-skills-plugins'
 const PKG = 'dsh-web-pets'
 const GITHUB = `https://github.com/${REPO}`
 const RELEASES_API = `https://api.github.com/repos/${REPO}/releases/latest`
+const RELEASES_LIST_API = `https://api.github.com/repos/${REPO}/releases`
 const TAGS_API = `https://api.github.com/repos/${REPO}/tags`
 /** 该插件的版本 tag 前缀（如 web-pets-v0.2.0）。 */
 const TAG_PREFIX = 'web-pets-v'
@@ -659,23 +660,32 @@ function semverGt(a, b) {
 }
 
 /**
- * 拉取远端最新版本：优先 releases/latest，回退 tags 中 TAG_PREFIX 前缀的最高版本。
+ * 拉取远端最新版本：优先按 TAG_PREFIX 过滤本插件的 GitHub Release（带回 release notes），
+ * 回退 tags 中 TAG_PREFIX 前缀的最高版本（无 notes）。
  * 网络策略：直连 → Steam++/Watt pinned(127.0.0.1:443) → 常见本地代理。
  */
 async function fetchRemoteLatest() {
   const attempt = async (fetchFn) => {
     try {
-      const rel = await fetchFn(RELEASES_API)
-      if (rel.status === 200) {
-        const j = JSON.parse(rel.body)
-        if (j && typeof j.tag_name === 'string') {
-          return {
-            latest: j.tag_name,
-            notes: typeof j.body === 'string' ? j.body : '',
-            htmlUrl: typeof j.html_url === 'string' ? j.html_url : GITHUB + '/releases',
+      // 1) 本插件 release（monorepo 内按前缀过滤，避免其它插件干扰）
+      const rels = await fetchFn(RELEASES_LIST_API)
+      if (rels.status === 200) {
+        const arr = JSON.parse(rels.body)
+        if (Array.isArray(arr)) {
+          const mine = arr
+            .filter((r) => r && typeof r.tag_name === 'string' && r.tag_name.startsWith(TAG_PREFIX))
+            .sort((a, b) => (semverGt(a.tag_name.slice(TAG_PREFIX.length), b.tag_name.slice(TAG_PREFIX.length)) ? -1 : 1))
+          if (mine[0]) {
+            const r = mine[0]
+            return {
+              latest: r.tag_name,
+              notes: typeof r.body === 'string' ? r.body : '',
+              htmlUrl: typeof r.html_url === 'string' ? r.html_url : GITHUB + '/releases',
+            }
           }
         }
       }
+      // 2) 回退 tags（无 release body，仅版本号）
       const tags = await fetchFn(TAGS_API)
       if (tags.status === 200) {
         const arr = JSON.parse(tags.body)
@@ -684,9 +694,8 @@ async function fetchRemoteLatest() {
             .map((t) => (t && typeof t.name === 'string' ? t.name : ''))
             .filter((n) => n.startsWith(TAG_PREFIX) && /\d+\.\d+\.\d+/.test(n))
             .sort((a, b) => (semverGt(a.slice(TAG_PREFIX.length), b.slice(TAG_PREFIX.length)) ? -1 : 1))
-          const best = mine[0] || (arr[0] && typeof arr[0].name === 'string' ? arr[0].name : '')
-          if (best) {
-            return { latest: best, notes: '', htmlUrl: GITHUB + '/releases' }
+          if (mine[0]) {
+            return { latest: mine[0], notes: '', htmlUrl: GITHUB + '/releases' }
           }
         }
       }
@@ -712,34 +721,63 @@ async function fetchRemoteLatest() {
   return null
 }
 
-/** 安装形态：link（monorepo 源码目录）或 profile（node_modules 副本）。 */
+/** 自给定目录向上查找含 fix-web-profile.sh 的仓库根（找不到返回 null）。 */
+function findRepoRoot(startDir) {
+  let cur = startDir
+  while (cur !== dirname(cur)) {
+    if (existsSync(join(cur, 'fix-web-profile.sh'))) return cur
+    cur = dirname(cur)
+  }
+  return null
+}
+
+/**
+ * 安装形态：
+ *   link     —— monorepo 源码 checkout（可 git pull + fix-web-profile.sh）
+ *   npm      —— registry 安装（可 pnpm update）
+ *   tarball  —— file:/link: 到仓库外的本地目录或 tarball（仅提示，不自动更新）
+ */
 function resolveInstall() {
   const here = fileURLToPath(import.meta.url)
   const pkgDir = dirname(dirname(here))
   const marker = join('node_modules', '')
-  if (pkgDir.includes(marker)) {
-    return { mode: 'profile', version: PKG_VERSION, profileDir: pkgDir.slice(0, pkgDir.indexOf(marker)) }
+  if (!pkgDir.includes(marker)) {
+    const repoDir = findRepoRoot(dirname(pkgDir)) || pkgDir
+    return { mode: 'link', version: PKG_VERSION, repoDir }
   }
-  // link 形态：自包目录向上查找含 fix-web-profile.sh 的仓库根
-  let repoDir = pkgDir
-  let cur = dirname(pkgDir)
-  while (cur !== dirname(cur)) {
-    if (existsSync(join(cur, 'fix-web-profile.sh'))) {
-      repoDir = cur
-      break
-    }
-    cur = dirname(cur)
-  }
-  return { mode: 'link', version: PKG_VERSION, repoDir }
+  const profileDir = pkgDir.slice(0, pkgDir.indexOf(marker))
+  return resolveProfileInstall(profileDir)
 }
 
-/** 运行更新命令（git pull + fix-web-profile.sh），带超时与输出截断。 */
-function runUpdate(repoDir) {
+/** 解析 node_modules 副本所属 profile 的依赖形态。 */
+function resolveProfileInstall(profileDir) {
+  let spec = ''
+  try {
+    const pj = JSON.parse(readFileSync(join(profileDir, 'package.json'), 'utf8'))
+    spec = (pj.dependencies && pj.dependencies[PKG]) || (pj.devDependencies && pj.devDependencies[PKG]) || ''
+  } catch {
+    // profile manifest 读取失败按 npm 处理
+  }
+  if (typeof spec === 'string' && (spec.startsWith('file:') || spec.startsWith('link:'))) {
+    // file:/link: 指向本仓库 → 按 link；否则视为 tarball/外部本地包
+    const target = spec.slice(5)
+    let start = null
+    try {
+      const candidate = resolve(target)
+      if (existsSync(candidate)) start = candidate
+    } catch {
+      // 保留 null
+    }
+    const repoDir = start ? findRepoRoot(start) : null
+    if (repoDir) return { mode: 'link', version: PKG_VERSION, profileDir, repoDir }
+    return { mode: 'tarball', version: PKG_VERSION, profileDir }
+  }
+  return { mode: 'npm', version: PKG_VERSION, profileDir }
+}
+
+/** 依次执行多个命令，带超时与输出截断（供更新流程使用）。 */
+function runSteps(steps, cwd) {
   return new Promise((resolvePromise) => {
-    const steps = [
-      { cmd: 'git', args: ['-C', repoDir, 'pull', '--ff-only'] },
-      { cmd: 'bash', args: [join(repoDir, 'fix-web-profile.sh')] },
-    ]
     const outputs = []
     const next = (i) => {
       if (i >= steps.length) {
@@ -761,7 +799,7 @@ function runUpdate(repoDir) {
       }
       let child
       try {
-        child = spawn(cmd, args, { cwd: repoDir, windowsHide: true })
+        child = spawn(cmd, args, { cwd, windowsHide: true })
       } catch (err) {
         out = String(err)
         finish(false)
@@ -784,6 +822,22 @@ function runUpdate(repoDir) {
     }
     next(0)
   })
+}
+
+/** link 形态更新：git pull + fix-web-profile.sh。 */
+function runLinkUpdate(repoDir) {
+  return runSteps(
+    [
+      { cmd: 'git', args: ['-C', repoDir, 'pull', '--ff-only'] },
+      { cmd: 'bash', args: [join(repoDir, 'fix-web-profile.sh')] },
+    ],
+    repoDir,
+  )
+}
+
+/** npm 形态更新：pnpm update。 */
+function runNpmUpdate(profileDir) {
+  return runSteps([{ cmd: 'pnpm', args: ['update', PKG] }], profileDir)
 }
 
 /** 组装全部路由（API + 素材）。 */
@@ -826,7 +880,7 @@ function makeRoutes() {
         const updateCommand =
           info.mode === 'link' && info.repoDir
             ? `cd "${info.repoDir}" && git pull --ff-only && bash fix-web-profile.sh`
-            : info.profileDir
+            : info.mode === 'npm' && info.profileDir
               ? `cd "${info.profileDir}" && pnpm update ${PKG}`
               : ''
         json(res, 200, {
@@ -872,11 +926,15 @@ function makeRoutes() {
         if (!requireMethod(req, res, 'POST')) return
         await withLocalGuard(req, res, async () => {
           const info = resolveInstall()
-          if (info.mode !== 'link' || !info.repoDir) {
-            json(res, 400, { ok: false, output: 'update only supported for monorepo link installs' })
+          let result
+          if (info.mode === 'link' && info.repoDir) {
+            result = await runLinkUpdate(info.repoDir)
+          } else if (info.mode === 'npm' && info.profileDir) {
+            result = await runNpmUpdate(info.profileDir)
+          } else {
+            json(res, 400, { ok: false, output: 'tarball 安装请到 GitHub Release 下载新版本后重新安装' })
             return
           }
-          const result = await runUpdate(info.repoDir)
           json(res, result.ok ? 200 : 500, { ok: result.ok, output: result.output.slice(-6000) })
         })
       },
@@ -1150,6 +1208,8 @@ export const _internals = {
   semverGt,
   localHostOk,
   resolveInstall,
+  resolveProfileInstall,
+  findRepoRoot,
   effectiveState,
   listPets,
   PKG_VERSION,

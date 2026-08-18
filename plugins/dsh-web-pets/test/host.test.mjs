@@ -1,7 +1,8 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
+import { readFileSync, writeFileSync, mkdtempSync } from 'node:fs'
 import { join, dirname } from 'node:path'
+import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
 import { name, inject, _internals } from '../lib/index.js'
 
@@ -14,10 +15,10 @@ test('插件身份：name/inject/apply', () => {
   assert.ok(inject.includes('sessions'))
 })
 
-test('版本号与 package.json 一致（0.2.1）', () => {
+test('版本号与 package.json 一致（0.2.2）', () => {
   const pkg = JSON.parse(readFileSync(join(PACKAGE_ROOT, 'package.json'), 'utf8'))
   assert.equal(_internals.PKG_VERSION, pkg.version)
-  assert.equal(_internals.PKG_VERSION, '0.2.1')
+  assert.equal(_internals.PKG_VERSION, '0.2.2')
 })
 
 test('toolBubble：常见工具映射与通用回退', () => {
@@ -72,3 +73,28 @@ test('安装形态：monorepo link（源码目录）', () => {
 test('effectiveState：初始为 idle（未超过 waiting 阈值）', () => {
   assert.equal(_internals.effectiveState(), 'idle')
 })
+
+test('resolveProfileInstall：registry 依赖 → npm', () => {
+  const dir = mkTempProfile({ 'dsh-web-pets': '^0.2.0' })
+  const info = _internals.resolveProfileInstall(dir)
+  assert.equal(info.mode, 'npm')
+})
+
+test('resolveProfileInstall：file: 指向仓库 → link', () => {
+  const dir = mkTempProfile({ 'dsh-web-pets': 'file:' + PACKAGE_ROOT })
+  const info = _internals.resolveProfileInstall(dir)
+  assert.equal(info.mode, 'link')
+  assert.ok(info.repoDir.endsWith('dsh-skills-plugins'))
+})
+
+test('resolveProfileInstall：file: 指向仓库外 → tarball', () => {
+  const dir = mkTempProfile({ 'dsh-web-pets': 'file:/tmp/not-a-repo' })
+  const info = _internals.resolveProfileInstall(dir)
+  assert.equal(info.mode, 'tarball')
+})
+
+function mkTempProfile(deps) {
+  const dir = mkdtempSync(join(tmpdir(), 'dwp-profile-'))
+  writeFileSync(join(dir, 'package.json'), JSON.stringify({ name: 'test', dependencies: deps }))
+  return dir
+}
