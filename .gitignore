@@ -22,3 +22,10 @@ plugins/dsh-computer-use/bin/cu-helper
 
 # dsh-computer-use 自动生成的候选 Skill（每次学习重新生成）
 plugins/dsh-computer-use/skills/generated/*.json
+
+# dsh-computer-use 训练数据集产物（持续生成，不入库）
+plugins/dsh-computer-use/training/raw/*
+plugins/dsh-computer-use/training/cleaned/*
+plugins/dsh-computer-use/training/positive/*
+plugins/dsh-computer-use/training/negative/*
+plugins/dsh-computer-use/training/preference/*
