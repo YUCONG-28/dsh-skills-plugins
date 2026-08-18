@@ -19,3 +19,6 @@ __pycache__/
 
 # dsh-computer-use 原生 helper 编译产物（架构相关，本地编译）
 plugins/dsh-computer-use/bin/cu-helper
+
+# dsh-computer-use 自动生成的候选 Skill（每次学习重新生成）
+plugins/dsh-computer-use/skills/generated/*.json
