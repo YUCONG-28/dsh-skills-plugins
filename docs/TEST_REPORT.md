@@ -35,8 +35,10 @@
 | dsh-computer-use | test/apply-smoke.mjs（mock ctx 注册 11 工具+Skill+路由） | ✅ 4/4（修复后） |
 | dsh-computer-use | python 测试 ×9（memory/skills/training/trainer/router/state/computer） | ✅ 全部 PASS |
 | dsh-computer-use | bin/cu-helper 直接调用：ping / apps / tcc-status | ✅ ok=true；辅助功能+屏幕录制已授权 |
-| dsh-vision-bridge | ocr.swift 编译 + 真实截图 OCR | ✅ 识别 1315 字符（WPS 界面文本） |
-| dsh-vision-bridge | apply-vision-patch.sh --check | ⚠️ **STALE**：dsh-host-apiproxy 准入补丁当前未生效（需用户重跑） |
+| dsh-vision-bridge | node --test（unit + adapter 集成） | ✅ 24/24（v0.2 重构：image-capable vision-router、OCR-first、cache L1+L2、fallback、timeout、fail-soft） |
+| dsh-vision-bridge | P6 静态审计（schemastery-only schema、无内部 @deepseek-ai 导入） | ✅ |
+| dsh-vision-bridge | apply-vision-patch.sh | ✅ 已废弃默认 NO-OP，不再需要（v0.2 虚拟模型通过官方准入） |
+| dsh-vision-bridge | 真实 dsh web 启动冒烟（P7，临时端口） | ✅ boot OK（本地 rc.7） |
 | dsh-web-pets | assets pet.json ×2 + emotes ×10 | ✅ 完整 |
 | dsh-web-pets | lib export 形状（apply/inject/name/_internals） | ✅ |
 | dsh-desktop-pets | lib export 形状 + pet_engine import（pyobjc） | ✅ |
@@ -55,15 +57,15 @@
 | --- | --- | --- |
 | 1 | computer_observe 未截图时返回 screenshot:null，违反输出 schema（工具必然报错） | ✅ 已修复（省略 null 字段；schema 保持 object 以兼容 dsh-tools），apply-smoke 4/4 验证 |
 | 2 | ocr.swift rewrite() 未使用变量 orientation 编译告警 | ✅ 已修复（`_`），重编译零告警 |
-| 3 | dsh-host-apiproxy 图像准入补丁失效（vision-bridge 依赖） | ⚠️ 沙箱无法写 /opt/homebrew；需用户执行下方命令 |
+| 3 | dsh-host-apiproxy 图像准入补丁失效（vision-bridge 依赖） | ✅ 已解决：v0.2 引入 image-capable 虚拟 provider，无需任何 node_modules 补丁 |
 
 ## 六、用户待执行（终端）
 
 ```bash
 cd ~/.dsh/profiles/web && pnpm install
 bash /Users/yucong/Documents/Deepseek\ Harness/dsh-skills-plugins/fix-web-profile.sh
-bash /Users/yucong/Documents/Deepseek\ Harness/dsh-skills-plugins/plugins/dsh-vision-bridge/bin/apply-vision-patch.sh   # 重打准入补丁
-bash /Users/yucong/Documents/Deepseek\ Harness/dsh-skills-plugins/plugins/dsh-vision-bridge/bin/apply-vision-patch.sh --check  # 确认 OK
+# vision-bridge v0.2 起不再需要 apply-vision-patch.sh（已废弃、默认 NO-OP）
+# 请改用虚拟模型：设置 → Models 选择 vision-router / deepseek-v4-pro-vision
 # 重启 dsh web 后 computer_observe 修复生效
 ```
 

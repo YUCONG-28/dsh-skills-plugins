@@ -27,7 +27,7 @@
   "scripts": {
     "build:ocr": "bash scripts/build-ocr.sh",
     "postinstall": "node scripts/install-ocr.mjs",
-    "test": "node --test test/",
+    "test": "node --test test/unit.test.mjs test/apply.test.mjs",
     "check": "node --check lib/index.js && node --check adapters/dsh.js && node --check lib/config.js"
   },
   "dsh": {

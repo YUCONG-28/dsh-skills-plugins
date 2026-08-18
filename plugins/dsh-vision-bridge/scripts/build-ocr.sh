@@ -13,7 +13,7 @@ if ! command -v swiftc >/dev/null 2>&1; then
 fi
 
 mkdir -p "$OUT_DIR"
-if swiftc -O -o "$OUT" "$SCRIPT_DIR/ocr.swift" 2>/tmp/vb-ocr-build.err; then
+if swiftc -O -module-cache-path "${OUT_DIR}/.swift-module-cache" -o "$OUT" "$SCRIPT_DIR/ocr.swift" 2>/tmp/vb-ocr-build.err; then
   chmod +x "$OUT"
   echo "vision-bridge: OCR 工具已编译 -> $OUT"
 else
