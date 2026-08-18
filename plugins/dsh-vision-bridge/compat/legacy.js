@@ -12,16 +12,12 @@
 import { messagesHaveImages } from '../lib/content.js';
 
 /**
- * Register the legacy llm/stream caption bridge. All DSH coupling is via the
- * injected runtime (see adapters/dsh.js); this module touches no DSH API
- * directly.
+ * Pure llm/stream caption-bridge handler (no DSH API usage here — the
+ * adapter owns ctx.on registration). Returns an async generator for use as
+ * a cordis waterfall listener.
  */
-export function legacyCaptionBridge(ctx, config, runtime) {
-	if (typeof ctx.on !== 'function' || !runtime.capabilities.stream) {
-		runtime.log('legacy caption bridge skipped: llm/stream waterfall unavailable');
-		return;
-	}
-	ctx.on('llm/stream', async function* (options, next) {
+export function createLegacyBridgeHandler(config, runtime) {
+	return async function* (options, next) {
 		try {
 			if (config.mode === 'off') return yield* next();
 			if (runtime.isInternal(options)) return yield* next();
@@ -41,8 +37,7 @@ export function legacyCaptionBridge(ctx, config, runtime) {
 			runtime.log('legacy caption bridge 处理失败，放行原请求: ' + (error?.message ?? String(error)));
 			return yield* next();
 		}
-	}, { global: true });
-	runtime.log('legacy caption bridge 已注册（mode=' + config.mode + '）');
+	};
 }
 
 /** Emit a one-time deprecation notice for the old patch script. */

@@ -23,7 +23,7 @@ import { runOcr, removeTemp, writeTempImage, cropImage, resizeImage } from '../o
 import { captionImages, captionImage } from '../providers/vision.js';
 import { decideRoute, estimateMessageTokens, lastUserText } from '../routing/policy.js';
 import { renderCaption, renderOcrCaption, renderFailureCaption } from '../evidence/structured.js';
-import { legacyCaptionBridge, deprecatedPatchNotice, legacyConfigNotes } from '../compat/legacy.js';
+import { createLegacyBridgeHandler, deprecatedPatchNotice, legacyConfigNotes } from '../compat/legacy.js';
 
 /** Probe which DSH capabilities are actually available (feature detection, not version checks). */
 export function probeCapabilities(ctx) {
@@ -572,7 +572,12 @@ export function apply(ctx, rawConfig) {
 			}
 		}
 		try {
-			legacyCaptionBridge(ctx, runtime.config, runtime);
+			if (typeof ctx.on === 'function' && runtime.capabilities.stream) {
+				ctx.on('llm/stream', createLegacyBridgeHandler(runtime.config, runtime), { global: true });
+				runtime.log('legacy caption bridge 已注册（mode=' + runtime.config.mode + '）');
+			} else {
+				runtime.log('legacy caption bridge skipped: llm/stream waterfall unavailable');
+			}
 		} catch (error) {
 			warn('注册 legacy caption bridge 失败: ' + (error?.message ?? String(error)));
 		}
