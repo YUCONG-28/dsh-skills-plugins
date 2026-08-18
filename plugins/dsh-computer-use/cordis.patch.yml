@@ -1,0 +1,20 @@
+# dsh-computer-use bundle patch: inserts its plugin row into the web profile roster.
+# Install via `dsh plugin --profile <name> add file:<path>/plugins/dsh-computer-use`
+# or as a `file:` dependency + this insert row in the profile's cordis.patch.yml.
+- insert:
+    - id: computer-use
+      name: dsh-computer-use
+      config:
+        enabled: true
+        announceToAgent: true
+        observationTtlMs: 0
+        actionTimeoutMs: 30000
+        settleMs: 250
+        maxNodes: 300
+        maxDepth: 24
+        interaction:
+          focusPolicy: preserve
+          keyboardPolicy: preserve
+          pointerInputPolicy: targeted
+        allowAllApps: false
+        grants: []

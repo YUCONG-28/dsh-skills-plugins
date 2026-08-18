@@ -16,3 +16,6 @@ __pycache__/
 # 本地测试 / 备份产物（不入库）
 .dsh-test/
 .backup-web-profile-*/
+
+# dsh-computer-use 原生 helper 编译产物（架构相关，本地编译）
+plugins/dsh-computer-use/bin/cu-helper

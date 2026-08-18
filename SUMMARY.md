@@ -18,6 +18,7 @@ web profile `~/.dsh/profiles/web/package.json` 依赖（`file:` 引用本仓库�
 | --- | --- | --- | --- |
 | `dsh-vision-bridge` | `plugins/dsh-vision-bridge/` | `~/.dsh/profiles/web/node_modules/dsh-vision-bridge` | 自动视觉路由 + 结构化转述 + 本地 OCR（macOS Vision）+ 故障转移；md5 与安装副本一致 |
 | `dsh-web-pets` | `plugins/dsh-web-pets/` | `~/.dsh/profiles/web/node_modules/dsh-web-pets` | Web 桌宠（浏览器内随会话状态换表情），service 依赖 `sessions` |
+| `dsh-computer-use` | `plugins/dsh-computer-use/` | `~/.dsh/profiles/web/node_modules/dsh-computer-use` | Computer Use：macOS 桌面观察与操作（11 个 computer_* 工具 + computer-use Skill + Swift 原生 helper）；需要辅助功能/屏幕录制权限 |
 | `dsh-desktop-pets` | `projects/desktop-pets/integration/dsh-plugin` | `~/.dsh/profiles/web/node_modules/dsh-desktop-pets` | macOS 桌面宠物插件（DSH 会话事件 → 桌宠状态通道） |
 | `@linxin666/dsh-web-ui-all` | 第三方 npm | `~/.dsh/profiles/web/node_modules/@linxin666/dsh-web-ui-all` | Web UI 全家桶（含 pet 界面入口），非本仓库维护 |
 
@@ -33,4 +34,4 @@ web profile `~/.dsh/profiles/web/package.json` 依赖（`file:` 引用本仓库�
 ## 四、当前状态
 
 - git：`main` 分支，与 `origin/main`（github.com/YUCONG-28/dsh-skills-plugins）同步，无未推送提交。
-- 本次变更：README 与本文档同步补全 `markdown-math-writer`（安装 / 兼容性 / 维护说明）与插件最新特性（vision-bridge 本地 OCR + 热配置、web-pets 并入 dsh-web-ui 宠物入口）。
+- 本次变更：新增 `dsh-computer-use` 插件（阶段 1 核心：Swift helper + 11 个工具 + 安全模型 + Skill），本机 web profile 已启用（file: 依赖 + cordis.patch.yml insert）；`bin/cu-helper` 为本地编译产物（gitignore，架构相关）。

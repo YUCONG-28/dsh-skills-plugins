@@ -13,7 +13,8 @@ dsh-skills-plugins/
 │   └── markdown-math-writer/  # 按目标渲染器正确书写 Markdown LaTeX 公式（GitHub/mpe/generic，v3.0）
 ├── plugins/                   # DSH 插件
 │   ├── dsh-vision-bridge/     # 视觉路由 + 描述兜底：纯文本主模型也能看图（含本地 OCR）
-│   └── dsh-web-pets/          # Web 桌宠：浏览器内随会话状态换表情的桌宠（可替换形象）
+│   ├── dsh-web-pets/          # Web 桌宠：浏览器内随会话状态换表情的桌宠（可替换形象）
+│   └── dsh-computer-use/      # Computer Use：macOS 桌面观察与操作（类似 Codex Computer Use）
 └── projects/                  # 独立项目（规范源）
     └── desktop-pets/          # macOS 原生多桌宠桌面库（AppKit/PyObjC，desktop-pets 原仓库内容）
 ```
@@ -90,6 +91,20 @@ dsh plugin --profile web add link:$(pwd)/plugins/dsh-web-pets
 ```
 
 安装后重启 `dsh web`。**并入 dsh-web-ui 的宠物入口**：先装 dsh-web-ui（含鲸鱼宠物 dsh-pet）再装本插件，设置 → Web UI 插件 → 宠物区域出现「宠物选择」卡片，可在鲸鱼娘（上游）/ 豆豆 / 雷米埃尔 / 自定义宠物间切换，**任意时刻只显示一只宠物**；仅装本插件时则是一只独立悬浮宠（右下角）+ 右键菜单切换/调大小/隐藏。替换/新增宠物形象：往 `plugins/dsh-web-pets/assets/pets/<名字>/` 放 `pet.json` + `emotes/` 即可（详见插件 README）。
+
+### 插件：dsh-computer-use（Computer Use）
+
+```bash
+# 1. 安装插件（file: 依赖 + cordis.patch.yml insert，本机已装）
+dsh plugin --profile web add file:$(pwd)/plugins/dsh-computer-use
+
+# 2. 编译原生 helper + 自检 + 打印 TCC 权限指引
+bash plugins/dsh-computer-use/scripts/install.sh
+```
+
+安装后重启 `dsh web`，新会话中加载 Skill：`/computer-use`。需要 macOS「辅助功能」权限（必需）与「屏幕录制」权限（截图用），授权对象是运行 dsh 的宿主进程。
+
+主要能力：Agent 可列出应用（`computer_list_apps`）、观察 Accessibility 树与截图（`computer_observe`）、点击/输入/按键/滚动/拖拽（`computer_click` 等），采用「先观察再动作、动作后新鲜状态验证」循环；带完整安全模型（按应用 read/control 授权、敏感动作一次性确认、陈旧 observation 拒绝、目标进程定向输入、不移动系统光标）。设计参考 [@anionex/dsh-computer-use](https://github.com/Anionex/dsh-computer-use) 与 Codex Computer Use。详见 [`plugins/dsh-computer-use/README.md`](plugins/dsh-computer-use/README.md)。
 
 ### 项目：desktop-pets（macOS 原生多桌宠）
 

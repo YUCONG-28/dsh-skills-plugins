@@ -1,0 +1,31 @@
+{
+  "name": "dsh-computer-use",
+  "version": "0.1.0",
+  "description": "DSH Computer Use 插件：为 Agent 提供类似 Codex Computer Use 的 macOS 桌面操控能力——先观察再动作、动作后新鲜状态验证，含 TCC 权限检测、按应用授权、敏感动作一次性确认与陈旧状态拒绝。",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./helper": "./lib/helper.js",
+    "./observations": "./lib/observations.js",
+    "./grants": "./lib/grants.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "scripts",
+    "skills",
+    "bin",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@deepseek-ai/dsh-tools": "^0.1.0-rc.6",
+    "@deepseek-ai/schemastery": "^3.18.1"
+  },
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  }
+}
