@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -320,6 +320,33 @@ test('ctx.visionBridge: ROI-first local OCR + describeRegion (P4)', async () => 
 	const described = await vb.describeRegion(data, ref, region);
 	assert.equal(described.source, 'ocr');
 	assert.match(described.text, /本地 OCR/);
+});
+
+
+test('telemetry: file mode records structured perf fields without secrets (P8)', async () => {
+	const dir = mkdtempSync(join(tmpdir(), 'vb-tel-'));
+	const file = join(dir, 'tel.jsonl');
+	try {
+		const m = makeMockCtx();
+		const cfg = baseConfig({ telemetry: 'file', telemetryFile: file });
+		apply(m.ctx, cfg);
+		const adapter = m.adapterStore.adapter;
+		await consume(adapter, { provider: 'vision-router', model: 'deepseek-v4-pro-vision', messages: [{ role: 'user', content: [{ type: 'text', text: '你好' }] }], signal: void 0 });
+		await consume(adapter, { provider: 'vision-router', model: 'deepseek-v4-pro-vision', messages: [imageMsg('tel-img')], signal: void 0 });
+		const lines = readFileSync(file, 'utf8').trim().split('\n').filter(Boolean);
+		assert.ok(lines.length >= 2);
+		const records = lines.map((l) => JSON.parse(l));
+		assert.ok(records.some((r) => r.route === 'backend'));
+		assert.ok(records.some((r) => r.route === 'evidence'));
+		for (const rec of records) {
+			assert.equal(typeof rec.total_ms, 'number');
+			assert.equal(rec.apiKey, undefined);
+			assert.equal(rec.image_text, undefined);
+			assert.equal(typeof rec.ts, 'string');
+		}
+	} finally {
+		rmSync(dir, { recursive: true, force: true });
+	}
 });
 
 test('API failure: vision stream error -> fail-soft placeholder, backend still runs', async () => {
