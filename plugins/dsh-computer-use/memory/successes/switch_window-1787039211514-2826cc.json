@@ -1,0 +1,47 @@
+{
+  "task": "switch_window",
+  "environment": {
+    "os": "Darwin",
+    "os_version": "25.5.0",
+    "app": "TextEdit",
+    "window_title": ""
+  },
+  "initial_state": {},
+  "actions": [
+    {
+      "type": "open_app",
+      "target": "TextEdit"
+    },
+    {
+      "type": "wait"
+    },
+    {
+      "type": "assert_app_window"
+    },
+    {
+      "type": "open_app",
+      "target": "Safari"
+    },
+    {
+      "type": "wait"
+    },
+    {
+      "type": "activate_app",
+      "target": "Safari"
+    },
+    {
+      "type": "wait"
+    },
+    {
+      "type": "assert_frontmost"
+    }
+  ],
+  "result": "ok",
+  "success": true,
+  "duration_ms": 11181,
+  "llm_calls": 0,
+  "vision_calls": 0,
+  "screenshots": 0,
+  "id": "switch_window-1787039211514-2826cc",
+  "created_at": "2026-08-18T09:46:51"
+}

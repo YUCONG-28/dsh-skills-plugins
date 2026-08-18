@@ -1,0 +1,36 @@
+{
+  "task": "observe_safari_tree",
+  "environment": {
+    "os": "Darwin",
+    "os_version": "25.5.0",
+    "app": "Safari",
+    "window_title": ""
+  },
+  "initial_state": {},
+  "actions": [
+    {
+      "type": "open_app",
+      "target": "Safari"
+    },
+    {
+      "type": "wait"
+    },
+    {
+      "type": "assert_app_window"
+    },
+    {
+      "type": "helper_observe"
+    },
+    {
+      "type": "assert_observe_ok"
+    }
+  ],
+  "result": "ok",
+  "success": true,
+  "duration_ms": 2853,
+  "llm_calls": 0,
+  "vision_calls": 0,
+  "screenshots": 0,
+  "id": "observe_safari_tree-1787039247149-5b2695",
+  "created_at": "2026-08-18T09:47:27"
+}

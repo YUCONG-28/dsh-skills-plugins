@@ -1,0 +1,36 @@
+{
+  "task": "open_textedit",
+  "environment": {
+    "os": "Darwin",
+    "os_version": "25.5.0",
+    "app": "TextEdit",
+    "window_title": ""
+  },
+  "initial_state": {},
+  "actions": [
+    {
+      "type": "open_app",
+      "target": "TextEdit"
+    },
+    {
+      "type": "wait"
+    },
+    {
+      "type": "dismiss_dialogs"
+    },
+    {
+      "type": "assert_app_window"
+    },
+    {
+      "type": "new_document_if_dialog"
+    }
+  ],
+  "result": "ok",
+  "success": true,
+  "duration_ms": 2864,
+  "llm_calls": 0,
+  "vision_calls": 0,
+  "screenshots": 0,
+  "id": "open_textedit-1787039189853-55af18",
+  "created_at": "2026-08-18T09:46:29"
+}

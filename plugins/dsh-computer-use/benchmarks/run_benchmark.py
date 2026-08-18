@@ -22,6 +22,7 @@ agent-driven 基准在 Phase 1（模型路由）后补充。
 import csv
 import json
 import os
+import platform
 import subprocess
 import sys
 import time
@@ -29,6 +30,10 @@ from pathlib import Path
 
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
 HELPER = PLUGIN_ROOT / "bin" / "cu-helper"
+sys.path.insert(0, str(PLUGIN_ROOT))
+from memory.store import MemoryStore, make_trajectory  # noqa: E402
+
+MEMORY = MemoryStore(PLUGIN_ROOT / "memory")
 DEFAULT_TASKS = Path(__file__).resolve().parent / "tasks.json"
 DEFAULT_OUTPUT = Path(__file__).resolve().parent / "benchmark_baseline.json"
 
@@ -632,6 +637,26 @@ def main():
         print(f"  [{task['id']}] {task.get('name','')} ...", end=" ", flush=True)
         r = run_task(task)
         results.append(r)
+        # Phase 5：写入轨迹记忆（成功/失败都记录，供检索与失败学习）
+        try:
+            if r["error_code"] not in ("skipped_prereq", "skipped_input_method", "skipped_environment"):
+                traj = make_trajectory(
+                    task=task["id"],
+                    environment={"os": platform.system(), "os_version": platform.release(),
+                                 "app": task.get("actions", [{}])[0].get("target", "") if task.get("actions") else "",
+                                 "window_title": ""},
+                    actions=[{"type": a.get("type"), **({"target": a.get("target")} if a.get("target") else {})}
+                             for a in task.get("actions", [])],
+                    result=r.get("error") or ("ok" if r["success"] else "fail"),
+                    success=r["success"],
+                    duration_ms=r["wall_time_ms"],
+                    llm_calls=r.get("llm_calls", 0),
+                    vision_calls=r.get("vision_calls", 0),
+                    screenshots=r.get("screenshots", 0),
+                )
+                MEMORY.save_trajectory(traj)
+        except Exception:  # noqa: BLE001
+            pass
         if r["error_code"] in ("skipped_prereq", "skipped_input_method", "skipped_environment"):
             print(f"SKIP [{r['error_code']}]")
         elif r["success"]:

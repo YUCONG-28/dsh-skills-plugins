@@ -1,0 +1,30 @@
+{
+  "task": "open_music",
+  "environment": {
+    "os": "Darwin",
+    "os_version": "25.5.0",
+    "app": "Music",
+    "window_title": ""
+  },
+  "initial_state": {},
+  "actions": [
+    {
+      "type": "open_app",
+      "target": "Music"
+    },
+    {
+      "type": "wait"
+    },
+    {
+      "type": "assert_app_window"
+    }
+  ],
+  "result": "ok",
+  "success": true,
+  "duration_ms": 2760,
+  "llm_calls": 0,
+  "vision_calls": 0,
+  "screenshots": 0,
+  "id": "open_music-1787039240982-562b33",
+  "created_at": "2026-08-18T09:47:20"
+}
