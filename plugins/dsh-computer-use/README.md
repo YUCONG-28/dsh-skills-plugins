@@ -124,6 +124,26 @@ bash plugins/dsh-computer-use/scripts/install.sh
   - `activate`：键盘输入前激活目标应用，确认其为前台后用全局键盘（`CGEventPost`，逐字符 12ms 间隔）——**可靠但会短暂抢焦点**，适合真实输入任务。
 - 语义输入优先：文本类输入建议优先 `computer_set_value`（AX value 整值写入，不受输入法/焦点影响，可写中文）；键盘输入（`computer_type_text`）用于需要真实按键语义的场景，且应提供 `handle` 让插件先点击聚焦目标控件，并确保系统输入法为 ASCII（ABC/English）。
 
+## 自学习与效率优化架构（Phase 0-10）
+
+按「先优化 Harness，再积累数据，最后训练模型」原则实施的架构升级：
+
+| Phase | 模块 | 交付 |
+|---|---|---|
+| 0 | `benchmarks/` | 22 个真实桌面基准任务 + runner，`benchmark_baseline.json/csv`（后续一切对比基准） |
+| 1 | `router/model_router.py` | Fast/Pro 路由：默认 Fast+thinking off；高风险/视觉/规划/未知 UI/连续失败→Pro |
+| 2 | `computer/router.py` | 工具优先级：shell→DOM/CDP→AX→shortcut→OCR→Vision（能结构化就不截图） |
+| 3 | `lib/batch.js` | `computer_batch` 工具：1~10 个确定性动作一次执行一次验证（减少 LLM 往返） |
+| 4 | `state/detector.py` | 状态指纹（窗口/AX 树/文本 hash）→ 稳定状态跳过截图与 Vision |
+| 5 | `memory/` | 轨迹记忆（successes/failures/index）+ 相似检索 + replay 前环境验证 |
+| 6 | `memory/classifier.py` `strategies.py` | 9 类失败自动分类 + 每类策略链（失败→分类→换策略→重试，防无限重复） |
+| 7 | `skills/skill_learning.py` | 成功轨迹→候选 Skill（参数化模板）→ generated/verified/deprecated 生命周期 |
+| 8 | `trainer/optimizer.py` | 6 类优化候选（重复轨迹/高延迟/频繁 vision/失败热点/batch/pro-heavy），候选需 Benchmark+回归才 promote |
+| 9 | `training/dataset.py` | 训练数据流水线（raw→cleaned→positive/negative→preference），严格脱敏（API key/密码/cookie/邮箱/证件等） |
+| 10 | `training/readiness.py` | 5 Stage 训练就绪度评估（A Retrieval/B Skill/C SFT/D Preference/E Policy Model）——仅评估不训练 |
+
+运行：`python3 benchmarks/run_benchmark.py`（自动积累轨迹→`memory/`）；`python3 training/readiness.py`（评估训练就绪度）。测试：`node --test test/` + `python3 -m unittest`（110 项）。
+
 ## 许可
 
 MIT © 2026。详见 [LICENSE](LICENSE)。
