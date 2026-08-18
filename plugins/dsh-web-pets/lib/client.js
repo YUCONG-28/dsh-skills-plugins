@@ -29,6 +29,7 @@ window.__ModuleLoader__.load({
 		let react = require("react");
 		react = __toESM(react, 1);
 		let react_dom_client = require("react-dom/client");
+		react_dom_client = __toESM(react_dom_client, 1);
 		//#region src/client/art.generated.ts
 		/**
 		* Generated pet assets (data URIs). Run `pnpm generate` after replacing any source GIF.
@@ -1313,7 +1314,7 @@ window.__ModuleLoader__.load({
 			const container = document.createElement("div");
 			container.dataset.dshWebPetsRoot = "";
 			document.body.appendChild(container);
-			const root = react_dom_client.createRoot.createRoot(container);
+			const root = react_dom_client.createRoot(container);
 			const render = () => {
 				if (snapshot === null) return;
 				if (!snapshot.enabled) {

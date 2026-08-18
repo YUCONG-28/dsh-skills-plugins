@@ -42,7 +42,7 @@ export function clientConfig(id: string = PKG): UserConfig {
     clean: false,
     fixedExtension: false,
     deps: {
-      neverBundle: ['react', 'react-dom/client'],
+      neverBundle: ['react', 'react-dom', 'react-dom/client'],
     },
     outputOptions: {
       entryFileNames: 'client.js',
@@ -54,3 +54,4 @@ export function clientConfig(id: string = PKG): UserConfig {
 }
 
 export default [hostConfig(PKG), clientConfig(PKG)]
+

@@ -28,7 +28,7 @@
  * @module dsh-web-pets/client
  */
 import * as react from 'react'
-import { createRoot as react_dom_client } from 'react-dom/client'
+import * as react_dom_client from 'react-dom/client'
 import { PET_ART } from './art.generated'
 import { PET_VERSION } from './version.generated'
 
