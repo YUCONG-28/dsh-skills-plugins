@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.2.1 (2026-08-18)
+
+- 修复：react-dom 被重复打包导致的客户端崩溃风险（`neverBundle` 增加 `react-dom`，`react-dom/client` 改用 namespace import）。
+- 修复：`fix-web-profile.sh` 现在会同步 `package.json`，自更新后版本号正确刷新，不再误报「有可用更新」。
+
 ## v0.2.0 (2026-08-18)
 
 ### 工程化（Phase 1）

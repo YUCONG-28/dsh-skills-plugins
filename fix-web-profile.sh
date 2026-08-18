@@ -33,13 +33,11 @@ for pair in "${PLUGINS[@]}"; do
   srcv="$(node -p "require('$srcdir/package.json').version" 2>/dev/null || echo '?')"
   dstv="$(node -p "require('$dstdir/package.json').version" 2>/dev/null || echo '?')"
   if [ "$srcv" != "$dstv" ]; then
-    echo "  NOTE 版本不一致: 源码 $srcv vs 副本 $dstv —— 建议 pnpm install 重链"
+    echo "  NOTE 版本不一致: 源码 $srcv vs 副本 $dstv —— 已同步 package.json（重启 dsh web 生效）"
   fi
 
-  # 2) package.json 差异 → 提示重链（不直接覆盖，pnpm 以 manifest 为准）
-  if ! diff -q "$srcdir/package.json" "$dstdir/package.json" >/dev/null 2>&1; then
-    echo "  NOTE package.json 有差异 —— 建议 cd ~/.dsh/profiles/web && pnpm install 重链"
-  fi
+  # 2) 同步 package.json（版本号/描述/files 等 manifest 字段；pnpm install 重链前的直接同步）
+  cp "$srcdir/package.json" "$dstdir/package.json" 2>/dev/null || echo "  WARN 无法同步 package.json"
 
   # 3) 按 files 字段全量同步（目录/文件均支持）
   FILES=$(node -p "JSON.stringify(require('$srcdir/package.json').files || [])" 2>/dev/null | tr -d '[]"' | tr ',' '\n' | sed '/^$/d')

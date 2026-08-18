@@ -14,10 +14,10 @@ test('插件身份：name/inject/apply', () => {
   assert.ok(inject.includes('sessions'))
 })
 
-test('版本号与 package.json 一致（0.2.0）', () => {
+test('版本号与 package.json 一致（0.2.1）', () => {
   const pkg = JSON.parse(readFileSync(join(PACKAGE_ROOT, 'package.json'), 'utf8'))
   assert.equal(_internals.PKG_VERSION, pkg.version)
-  assert.equal(_internals.PKG_VERSION, '0.2.0')
+  assert.equal(_internals.PKG_VERSION, '0.2.1')
 })
 
 test('toolBubble：常见工具映射与通用回退', () => {
