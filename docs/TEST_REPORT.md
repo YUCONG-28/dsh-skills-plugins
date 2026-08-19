@@ -73,8 +73,25 @@ bash /Users/yucong/Documents/Deepseek\ Harness/dsh-skills-plugins/fix-web-profil
 # 重启 dsh web 后 computer_observe 修复生效
 ```
 
+
+## 八、事务式升级/回滚工具（2026-08-19 新增）
+
+| 组件 | 测试 | 结果 |
+| --- | --- | --- |
+| scripts/check-versions.mjs | 仓库侧 ownPlugins 一致性（vision-bridge 0.3.3 基线） | ✅ PASS |
+| scripts/check-versions.mjs --profile | 第三方 verified + dshCore 与真实 profile 一致 | ✅ PASS（web-ui-all 0.2.3 / dsh rc.7） |
+| scripts/check-repo.mjs | versions.lock / cordis manifest insert id / 禁止 node_modules 补丁 / 根文档无旧补丁引用 | ✅ PASS |
+| scripts/self-test.sh | bash -n 全脚本 + 漂移 fixture 检测 + snapshot/rollback dry-run（临时 DSH_HOME） | ✅ 全部 PASS |
+| scripts/dsh-snapshot.sh | 临时 home 生成 manifest（repoCommit/dshVersion/ownPlugins/files/installShapes）+ latest symlink + pnpm-lock.yaml 副本 | ✅ |
+| scripts/dsh-rollback.sh --dry-run | 输出回滚计划、快照 sha256 校验通过 | ✅ |
+| scripts/dsh-healthcheck.sh | 当前实例（127.0.0.1:3080）：进程 / HTTP 200+__DSH_BOOT__ / 54 个 client entry | ✅ 3/3 PASS（无日志文件时日志项降级 WARN，--require-log 强制） |
+| scripts/dsh-safe-upgrade.sh --dry-run | preflight（check-versions）→ snapshot → 全插件测试 → 隔离 canary boot + healthcheck（dump-config 校验插件组合）→ 不 apply 退出 | ✅ 通过（canary 5/5 PASS） |
+| scripts/run-plugin-tests.sh | web-pets / vision-bridge / computer-use 全部自动化测试 | ✅ 全部 PASS |
+| versions.lock.json | 漂移修复：vision-bridge 0.1.0 → 0.3.3；web-ui-all 0.2.0 → 0.2.3；新增 dshCore rc.7 / upstreamNext rc.8 | ✅ |
+
 ## 七、未自动测试项（需人工/不适合自动化）
 
 - benchmarks/run_benchmark.py：会真实操控桌面应用（打开 App/输入），未自动执行
 - dsh-web-pets 浏览器侧渲染（宠物卡片/悬浮宠）：需浏览器人工确认
 - study-review 五种提示词模式：属模型行为，脚本层已覆盖
+- dsh-safe-upgrade.sh 的真实 apply/promote/自动回滚路径：会停止/重启本机 dsh web 与改动真实 profile，仅在用户显式 --yes 时执行（CI 与 dry-run 均不覆盖）

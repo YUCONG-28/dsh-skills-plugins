@@ -32,5 +32,12 @@
   },
   "engines": {
     "node": "^22.19.0 || >=24.0.0"
+  },
+  "scripts": {
+    "test": "node --test test/unit.test.mjs test/batch.test.mjs test/apply-smoke.mjs"
+  },
+  "devDependencies": {
+    "@deepseek-ai/schemastery": "3.18.1",
+    "@deepseek-ai/dsh-tools": "0.1.0-rc.7"
   }
 }

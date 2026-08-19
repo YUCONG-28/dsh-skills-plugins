@@ -1,7 +1,7 @@
 # 兼容性矩阵（COMPATIBILITY）
 
 > 记录本仓库每个插件/skill 依赖的**上游 API 面**与风险等级，供升级前对照。
-> 更新日期：2026-08-18（dsh-web-ui-all 0.2.0 验证基线）
+> 更新日期：2026-08-19（dsh-web-ui-all 0.2.3 验证基线；dsh core rc.7，upstream next rc.8）
 > 配套文档：[UPGRADE_RUNBOOK.md](UPGRADE_RUNBOOK.md) · [versions.lock.json](../versions.lock.json) · [UPGRADE_CHECKLIST.md](UPGRADE_CHECKLIST.md)
 
 ## 风险等级约定
@@ -22,7 +22,7 @@
 | `dsh-web-pets` | `@deepseek-ai/dsh-host-webserver` 路由注册（新增 /info /check /update，Host 本地校验） | DSH 核心 | 🟢 |
 | `dsh-vision-bridge` | pi-ai provider 声明（qwen：apiKeyEnv / baseURL / models / thinkingFormat） | `@deepseek-ai/dsh-llm`（settings.yaml `llm-pi-ai`） | 🟡 |
 | `dsh-vision-bridge` | DashScope 兼容端点角色限制（systemPrompt→首条 user 消息的 developer-role 兼容处理） | DashScope API（外部） | 🟡 |
-| `dsh-vision-bridge` | dsh-host-apiproxy 图像准入（`bin/apply-vision-patch.sh` 放宽） | `@deepseek-ai/dsh-host-apiproxy` | 🔴（dsh 重装后必须重跑补丁） |
+| `dsh-vision-bridge` | dsh-host-apiproxy 图像准入（image-capable 虚拟 provider 声明 `inputModalities`，官方准入直接通过） | `@deepseek-ai/dsh-host-apiproxy` | 🟢（v0.3+ 无需任何 node_modules 补丁；旧式补丁脚本已废弃、默认 NO-OP） |
 | `dsh-computer-use` | `@deepseek-ai/dsh-tools` 工具注册协议 + macOS Accessibility/TCC 权限模型 | DSH 核心 / macOS | 🟡 |
 | `dsh-desktop-pets` | `@deepseek-ai/dsh-session` 服务名 `sessions`（复数） | DSH 核心 | 🟡 |
 | describe-image override | profile 级 id 定向覆盖 `web-ui-describe-image` 的 config（baseURL/apiStyle/model/apiKeyEnv/maxOutputTokens/timeoutMs/interceptImageSend） | `@linxin666/dsh-web-ui-all` | 🔴（上游改 id 或 config 形状则静默失效） |
@@ -35,11 +35,12 @@
 | `markdown-math-writer` | 运行时仅 Node.js（scripts/ 自带依赖），无 DSH 运行时 API | 🟢 |
 | `study-review` | Python 标准库 + Ghostscript（`gs`），无 DSH 运行时 API | 🟢 |
 
-## 三、上游版本基线（2026-08-18）
+## 三、上游版本基线（2026-08-19）
 
 | 包 | 验证版本 | 说明 |
 | --- | --- | --- |
-| `@linxin666/dsh-web-ui-all` | 0.2.0 | 聚合包；0.2.0 新增 skill-explorer / better-sidebar，**移除 live-stats** |
+| `@linxin666/dsh-web-ui-all` | 0.2.3 | 聚合包；0.2.x 新增 skill-explorer / better-sidebar，**移除 live-stats** |
+| `@deepseek-ai/dsh`（core） | 0.1.0-rc.7 | 本机验证基线；upstream `next` 已到 **0.1.0-rc.8**（用 `scripts/dsh-safe-upgrade.sh --dsh-target next` 升级） |
 | `@deepseek-ai/dsh-base` / `@deepseek-ai/dsh-web-app` | profile bundles（随 dsh 版本） | 见 `~/.dsh/profiles/web/package.json` |
 
 ## 四、升级前必查清单（摘要）

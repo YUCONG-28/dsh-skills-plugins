@@ -21,3 +21,6 @@
 #           flashDeepseekModel: deepseek-v4-flash
 #   并在模型选择中选用 vision-router / deepseek-v4-flash-vision（默认 Flash 档）
 #   或 vision-router / deepseek-v4-pro-vision（Pro 档）。
+
+# 空 patch：插件由 profile 的 cordis.patch.yml insert 启用；保留为合法空数组以便 dsh 加载。
+[]

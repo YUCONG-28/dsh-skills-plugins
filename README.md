@@ -80,11 +80,7 @@ cp -R plugins/dsh-vision-bridge ~/dsh-vision-bridge
 # 并执行 pnpm install
 ```
 
-安装后**必须**运行视觉准入补丁（dsh 重装或 `dsh plugin add` 触发 pnpm 重链后需重跑）：
-
-```bash
-bash plugins/dsh-vision-bridge/bin/apply-vision-patch.sh
-```
+v0.3+ **无需任何 node_modules 补丁**：插件声明 image-capable 虚拟 provider（`vision-router`），官方图像准入直接通过；旧式补丁脚本已废弃（默认 NO-OP）。
 
 在 `cordis.patch.yml` 中启用插件并配置视觉模型（示例见插件 README）。
 
@@ -161,7 +157,8 @@ scripts/petctl.sh remiel start          # 启动桌宠
 - 新增 Skill：复制到 `skills/<name>/`（含 `SKILL.md`）提交即可；本地安装 `cp -R skills/<name> ~/.dsh/skills/`（DSH 自动发现，无需重启）。
 - 修改 `skills/markdown-math-writer/scripts/` 下脚本：同步更新 `package-lock.json` 并在本地 `npm install` 验证（`node_modules` 不入库）。
 - 本机实际安装状态与一致性核对见 [SUMMARY.md](SUMMARY.md)。
-- **升级兼容**：升级前对照 [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)（上游 API 面矩阵）与 [docs/UPGRADE_RUNBOOK.md](docs/UPGRADE_RUNBOOK.md)（流程/回滚），版本基线记录在 [versions.lock.json](versions.lock.json)。
+- **升级兼容**：升级前对照 [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)（上游 API 面矩阵）与 [docs/UPGRADE_RUNBOOK.md](docs/UPGRADE_RUNBOOK.md)（事务式流程），版本基线记录在 [versions.lock.json](versions.lock.json)（CI 自动校验，防漂移）。
+- **事务式升级 / 快速回滚**：推荐用 [scripts/dsh-safe-upgrade.sh](scripts/dsh-safe-upgrade.sh)（preflight → LKG snapshot → 全插件测试 → 隔离 DSH_HOME canary → apply → health-check → promote / 失败自动回滚）；升级前也可单独执行 [scripts/dsh-snapshot.sh](scripts/dsh-snapshot.sh)，崩溃后用 [scripts/dsh-rollback.sh](scripts/dsh-rollback.sh) latest 一键回滚（含 pnpm-lock.yaml / git SHA / DSH core 版本 / 插件版本 / 安装形态）。健康检查见 [scripts/dsh-healthcheck.sh](scripts/dsh-healthcheck.sh)。
 - 注意：`plugins/dsh-vision-bridge` 的打包范围由 `package.json` 的 `files` 字段决定（当前为 `lib` / `README.md` / `scripts` / `bin` / `cordis.patch.yml`）；`plugins/dsh-web-pets` 的打包范围同理（`lib` / `assets` / `src` / `scripts` / `cordis.patch.yml` / `CHANGELOG.md` / `README.md` / `README.en.md` / `LICENSE`）。
 
 ## Awesome List 投稿文案

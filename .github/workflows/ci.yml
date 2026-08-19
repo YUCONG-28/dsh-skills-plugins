@@ -5,6 +5,9 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   web-pets:
     name: dsh-web-pets (build + test)
@@ -24,3 +27,69 @@ jobs:
           cache-dependency-path: plugins/dsh-web-pets/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - run: pnpm test
+
+  vision-bridge:
+    name: dsh-vision-bridge (audit + tests + pack)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: plugins/dsh-vision-bridge
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: plugins/dsh-vision-bridge/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: node ci/check-p6.mjs .
+      - run: pnpm test
+      - name: Import smoke
+        run: node --input-type=module -e 'import("./lib/index.js").then(m => { if (!m.apply || !m.Config || !m.name) process.exit(1); }).catch(() => process.exit(1))'
+      - name: npm pack dry-run
+        run: npm pack --dry-run --cache /tmp/vb-npm-cache
+
+  computer-use:
+    name: dsh-computer-use (node:test + python)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: plugins/dsh-computer-use
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: plugins/dsh-computer-use/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
+      - name: Python unit tests
+        run: |
+          fail=0
+          for f in $(find . -name 'test_*.py' | sort); do
+            echo "-- python3 $f"
+            python3 "$f" >/dev/null 2>&1 || { echo "FAIL $f"; fail=1; }
+          done
+          [ "$fail" -eq 0 ] || exit 1
+
+  repository:
+    name: repository (versions.lock + cordis + no-patch guard + self-test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: versions.lock consistency
+        run: node scripts/check-versions.mjs
+      - name: repo invariants (cordis manifest / no node_modules patch / no stale docs)
+        run: node scripts/check-repo.mjs
+      - name: scripts self-test (bash -n + snapshot/rollback dry-run fixtures)
+        run: bash scripts/self-test.sh
