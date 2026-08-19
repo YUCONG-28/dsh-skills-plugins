@@ -19,6 +19,11 @@ die()       { echo "错误: $*" >&2; exit 1; }
 
 now_ts()    { date +%Y%m%d-%H%M%S; }
 
+# 跨平台 sha256（macOS 有 shasum；Linux CI 有 sha256sum）
+sha_tool() {
+  if command -v shasum >/dev/null 2>&1; then echo "shasum -a 256"; else echo "sha256sum"; fi
+}
+
 resolve_home() {
   echo "${DSH_HOME:-$HOME/.dsh}"
 }

@@ -78,11 +78,11 @@ const m = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
 const out = (m.files || []).map(f => f.sha256 + "  " + f.name).join("\n") + "\n";
 fs.writeFileSync(process.argv[2], out);
 ' "$MANIFEST" "$SUMS"
-if (cd "$SNAP_DIR" && shasum -a 256 -c "$SUMS" >/dev/null 2>&1); then
+if (cd "$SNAP_DIR" && $(sha_tool) -c "$SUMS" >/dev/null 2>&1); then
   log_ok "快照文件哈希校验通过"
 else
   echo "--- 哈希校验失败明细 ---"
-  (cd "$SNAP_DIR" && shasum -a 256 -c "$SUMS" 2>&1) | grep -v ': OK$' | head -20 || true
+  (cd "$SNAP_DIR" && $(sha_tool) -c "$SUMS" 2>&1) | grep -v ': OK$' | head -20 || true
   rm -f "$SUMS"
   die "快照文件损坏，拒绝回滚"
 fi

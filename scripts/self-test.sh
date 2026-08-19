@@ -107,10 +107,10 @@ fi
 step "4. dsh-rollback.sh --dry-run（临时 home）"
 bash "$SCRIPT_DIR/dsh-rollback.sh" latest --dry-run --home "$SHOME" --repo "$REPO" > "$TMP/rollback.out" 2>&1
 RB_RC=$?
-if [ "$RB_RC" -eq 0 ] && grep -q '回滚计划' "$TMP/rollback.out"; then
+if [ "${RB_RC:-1}" -eq 0 ] && grep -q '回滚计划' "$TMP/rollback.out"; then
   ok "rollback dry-run 输出了回滚计划"
 else
-  bad "rollback dry-run 失败（rc=$RB_RC）"; FAIL=1
+  bad "rollback dry-run 失败（rc=${RB_RC:-?}）"; FAIL=1
 fi
 if grep -q '快照文件哈希校验通过' "$TMP/rollback.out"; then
   ok "rollback 哈希校验通过"

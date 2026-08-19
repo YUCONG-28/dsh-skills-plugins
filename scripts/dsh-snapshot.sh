@@ -95,7 +95,7 @@ add_file() { # add_file <source> <snapshot-relative-name>
   if [ ! -e "$src" ]; then log_warn "跳过缺失文件: $src"; return 0; fi
   mkdir -p "$(dirname "$DIR/$name")"
   cp -p "$src" "$DIR/$name" || { log_fail "复制失败: $src"; return 1; }
-  local sha; sha="$(shasum -a 256 "$DIR/$name" | awk '{print $1}')"
+  local sha; sha="$($(sha_tool) "$DIR/$name" | awk '{print $1}')"
   printf '%s\t%s\t%s\n' "$name" "$src" "$sha" >> "$FILES_TMP"
 }
 
