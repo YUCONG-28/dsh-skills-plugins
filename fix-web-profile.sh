@@ -53,7 +53,7 @@ sync_plugin() {
   srcv="$(node -p "require('$srcdir/package.json').version" 2>/dev/null || echo '?')"
   dstv="$(node -p "require('$dstdir/package.json').version" 2>/dev/null || echo '?')"
   if [ "$srcv" != "$dstv" ]; then
-    echo "  NOTE 版本不一致: 源码 $srcv vs 副本 $dstv（本次同步会更新 package.json）"
+    echo "  NOTE 版本不一致: 源码 $srcv vs 副本 ${dstv}（本次同步会更新 package.json）"
   fi
 
   # 2) files 清单（缺省 lib）

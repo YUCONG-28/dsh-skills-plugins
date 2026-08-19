@@ -44,7 +44,7 @@ ROLLBACK_DIR="$HOME_DIR/rollback"
 
 # ---------- preflight ----------
 [ -d "$REPO/.git" ] || die "仓库目录无效: $REPO"
-[ -f "$PROFILE_DIR/package.json" ] || die "profile 目录无效: $PROFILE_DIR（缺 package.json）"
+[ -f "$PROFILE_DIR/package.json" ] || die "profile 目录无效: ${PROFILE_DIR}（缺 package.json）"
 [ -f "$PROFILE_DIR/pnpm-lock.yaml" ] || log_warn "profile 缺少 pnpm-lock.yaml（仍会快照，但依赖图不完整）"
 command -v node >/dev/null 2>&1 || die "需要 node"
 command -v shasum >/dev/null 2>&1 || die "需要 shasum"

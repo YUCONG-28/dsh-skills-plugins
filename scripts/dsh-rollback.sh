@@ -140,7 +140,7 @@ checkout_repo() {
       echo "  工作区脏，--force：先 stash"
       git -C "$REPO" stash push -m "rollback-$BROKEN_TS" || die "stash 失败"
     else
-      die "仓库工作区有未提交改动（回滚需要 checkout 到 $target）；先提交/stash，或 --force"
+      die "仓库工作区有未提交改动（回滚需要 checkout 到 ${target}）；先提交/stash，或 --force"
     fi
   fi
   git -C "$REPO" checkout --detach "$target" || die "checkout 失败: $target"
@@ -150,7 +150,7 @@ checkout_repo() {
 # ---------- 7. 重装依赖 + 同步 ----------
 reinstall_profile() {
   command -v pnpm >/dev/null 2>&1 || die "需要 pnpm"
-  (cd "$PROFILE_DIR" && pnpm install --frozen-lockfile) || die "pnpm install --frozen-lockfile 失败（可重试；当前状态已备份于 $BROKEN_DIR）"
+  (cd "$PROFILE_DIR" && pnpm install --frozen-lockfile) || die "pnpm install --frozen-lockfile 失败（可重试；当前状态已备份于 ${BROKEN_DIR}）"
   bash "$REPO_ROOT/fix-web-profile.sh" || log_warn "fix-web-profile.sh 有告警（查看上方输出）"
   [ -f "$REPO_ROOT/sync-skills.sh" ] && bash "$REPO_ROOT/sync-skills.sh" || true
 }
@@ -207,7 +207,7 @@ fi
 plan_backup
 if [ "$YES" -eq 1 ]; then stop_web; else log_warn "未 --yes：跳过停止 dsh web（回滚文件仍会恢复，重启需手动）"; fi
 restore_files
-log_ok "配置/依赖图已恢复（备份: $BROKEN_DIR）"
+log_ok "配置/依赖图已恢复（备份: ${BROKEN_DIR}）"
 checkout_repo
 reinstall_profile
 if smoke_and_restart; then

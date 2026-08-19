@@ -14,7 +14,7 @@ FAIL=0
 for skill in "$WS"/skills/*/; do
   [ -d "$skill" ] || continue
   name="$(basename "$skill")"
-  [ -f "$skill/SKILL.md" ] || { echo "SKIP $name（无 SKILL.md）"; continue; }
+  [ -f "$skill/SKILL.md" ] || { echo "SKIP ${name}（无 SKILL.md）"; continue; }
   if [ -d "$DEST/$name" ]; then
     if diff -rq "$skill" "$DEST/$name" >/dev/null 2>&1; then
       echo "OK   $name 已同步"
