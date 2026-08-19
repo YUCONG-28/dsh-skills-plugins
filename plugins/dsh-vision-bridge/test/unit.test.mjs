@@ -4,7 +4,7 @@ import { mkdtempSync, rmSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { Config, normalizeLegacyConfig, PROMPT_VERSION, SCHEMA_VERSION } from '../lib/config.js';
+import { Config, normalizeLegacyConfig, listPresets, resolvePreset, PROMPT_VERSION, SCHEMA_VERSION } from '../lib/config.js';
 import { contentHasImage, messagesHaveImages, collectImageRefs, transformMessages, imageBytes } from '../lib/content.js';
 import {
 	isStructuredEvidence, extractStructuredJson, extractStructuredBatch,
@@ -43,6 +43,19 @@ test('Config: legacy keys migrate to canonical fields', () => {
 	const cfg2 = normalizeLegacyConfig(Config({ visionProvider: 'explicit', qwenProvider: 'legacy' }));
 	assert.equal(cfg2.visionProvider, 'explicit');
 	assert.equal(cfg2.qwenProvider, 'explicit');
+});
+
+test('Config: pro/flash presets expose both router models', () => {
+	const cfg = Config({});
+	const presets = listPresets(cfg);
+	assert.equal(presets.length, 2);
+	assert.equal(presets[0].id, 'flash'); // defaultTier=flash is listed first
+	assert.equal(presets[0].routerModel, 'deepseek-v4-flash-vision');
+	assert.equal(presets[0].deepseekModel, 'deepseek-v4-flash');
+	assert.equal(presets[0].visionModel, 'qwen3-vl-flash');
+	assert.equal(resolvePreset(cfg, 'deepseek-v4-pro-vision').id, 'pro');
+	assert.equal(resolvePreset(cfg, 'deepseek-v4-flash-vision').id, 'flash');
+	assert.equal(resolvePreset(cfg, 'unknown').id, 'flash');
 });
 
 test('content helpers walk nested tool results', () => {

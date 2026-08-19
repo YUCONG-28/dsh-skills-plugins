@@ -50,6 +50,7 @@ function makeMockCtx(opts = {}) {
 		yield { type: 'finish', reason: { kind: 'stop' } };
 	}
 
+	let visionThrows = !!opts.visionThrows;
 	async function* visionStream(request) {
 		visionCalls.push(request);
 		if (opts.hangVision) {
@@ -61,7 +62,7 @@ function makeMockCtx(opts = {}) {
 			});
 			return;
 		}
-		if (opts.visionThrows) throw new Error('vision provider API failure');
+		if (visionThrows) throw new Error('vision provider API failure');
 		const content = request.messages?.[0]?.content ?? [];
 		const imageCount = content.filter((b) => b?.type === 'image').length;
 		const payload = imageCount > 1 ? BATCH_JSON : EVIDENCE_JSON;
@@ -98,21 +99,24 @@ function makeMockCtx(opts = {}) {
 
 	const attachments = {
 		readImage: async (ref) => { readCalls.push(String(ref.attachmentId)); return { ref, data: stored.get(String(ref.attachmentId)) ?? new Uint8Array([1, 2, 3]) }; },
-		saveImage: async ({ data, mediaType }) => {
-			const id = 'stored-' + (++storedCounter);
-			const ref = { attachmentId: id, mediaType, bytes: data.length, width: 100, height: 100 };
-			stored.set(id, data);
-			return ref;
-		}
+		...(opts.noSaveImage ? {} : {
+			saveImage: async ({ data, mediaType }) => {
+				const id = 'stored-' + (++storedCounter);
+				const ref = { attachmentId: id, mediaType, bytes: data.length, width: 100, height: 100 };
+				stored.set(id, data);
+				return ref;
+			}
+		})
 	};
 
+	let attachmentStore = opts.lateAttachments ? null : attachments;
 	const ctx = {
-		get: (name) => (name === 'llm' ? llm : name === 'attachments' ? attachments : void 0),
+		get: (name) => (name === 'llm' ? llm : name === 'attachments' ? attachmentStore : void 0),
 		logger,
 		on: (event, fn, opts2) => { const list = listeners.get(event) ?? []; list.push(fn); listeners.set(event, list); return () => { /* noop */ }; },
 		provide: (name2, value) => { provided[name2] = value; }
 	};
-	return { ctx, backendCalls, visionCalls, fallbackCalls, readCalls, listeners, provided, logs, get adapterStore() { return adapterStore; }, get directoryStore() { return directoryStore; } };
+	return { ctx, backendCalls, visionCalls, fallbackCalls, readCalls, listeners, provided, logs, get adapterStore() { return adapterStore; }, get directoryStore() { return directoryStore; }, get realAttachments() { return attachments; }, set attachStore(v) { attachmentStore = v; }, set visionThrows(v) { visionThrows = v; } };
 }
 
 const makeRef = (id) => ({ attachmentId: id, mediaType: 'image/png', bytes: 2048, width: 100, height: 100 });
@@ -130,6 +134,10 @@ function baseConfig(extra = {}) {
 		deepseekModel: 'deepseek-v4-pro',
 		visionProvider: 'qwen',
 		visionModel: 'qwen-vl-max',
+		flashRouterModel: 'deepseek-v4-flash-vision',
+		flashDeepseekModel: 'deepseek-v4-flash',
+		flashVisionModel: 'qwen3-vl-flash',
+		defaultTier: 'flash',
 		captionFormat: 'structured',
 		strictJson: true,
 		fallbackProviders: [],
@@ -165,7 +173,7 @@ test('exports shape + fail-soft on unsupported DSH', () => {
 	// unsupported: no llm, no attachments
 	const bareCtx = { logger: m.ctx.logger, get: () => void 0, on: () => () => {}, provide: () => {} };
 	assert.doesNotThrow(() => apply(bareCtx, baseConfig()));
-	assert.ok(m.logs.warn.some((w) => w.includes('vision bridge disabled')));
+	assert.ok(m.logs.warn.some((w) => w.includes('按需重试')));
 });
 
 test('apply registers image-capable vision-router adapter', async () => {
@@ -176,10 +184,16 @@ test('apply registers image-capable vision-router adapter', async () => {
 	assert.deepEqual(m.adapterStore.providers, ['vision-router']);
 	const adapter = m.adapterStore.adapter;
 	const models = await adapter.listModels('vision-router');
+	assert.equal(models.length, 2);
 	assert.deepEqual(models[0].inputModalities, ['text', 'image']);
+	assert.equal(models[0].id, 'deepseek-v4-flash-vision');
+	assert.equal(models[1].id, 'deepseek-v4-pro-vision');
 	const info = await adapter.resolveModel('vision-router', 'deepseek-v4-pro-vision');
 	assert.deepEqual(info.inputModalities, ['text', 'image']);
 	assert.equal(info.context.contextWindow, 128000);
+	const flashInfo = await adapter.resolveModel('vision-router', 'deepseek-v4-flash-vision');
+	assert.equal(flashInfo.name, 'DeepSeek V4 Flash (Vision Bridge)');
+	assert.deepEqual(flashInfo.inputModalities, ['text', 'image']);
 	assert.ok(m.directoryStore !== void 0);
 	assert.equal(m.provided.visionBridge.priority.join('>'), 'dom>accessibility>keyboard>local-ocr>roi-vision>full-vision');
 	assert.ok(m.listeners.has('llm/stream'));
@@ -198,6 +212,39 @@ test('text request passes through to DeepSeek backend', async () => {
 	assert.equal(m.visionCalls.length, 0);
 });
 
+test('flash router model maps text backend to deepseek-v4-flash', async () => {
+	const m = makeMockCtx();
+	apply(m.ctx, baseConfig());
+	const adapter = m.adapterStore.adapter;
+	const options = { provider: 'vision-router', model: 'deepseek-v4-flash-vision', messages: [{ role: 'user', content: [{ type: 'text', text: '你好' }] }], signal: void 0 };
+	await consume(adapter, options);
+	assert.equal(m.backendCalls.length, 1);
+	assert.equal(m.backendCalls[0].provider, 'deepseek-official');
+	assert.equal(m.backendCalls[0].model, 'deepseek-v4-flash');
+	assert.equal(m.visionCalls.length, 0);
+});
+
+test('flash strong visual task routes whole turn to qwen3-vl-flash', async () => {
+	const m = makeMockCtx();
+	apply(m.ctx, baseConfig({ ocrMinChars: 100000 }));
+	const adapter = m.adapterStore.adapter;
+	await consume(adapter, { provider: 'vision-router', model: 'deepseek-v4-flash-vision', messages: [imageMsg('img-flash-strong', '帮我看看这张图表的数据')], signal: void 0, system: '你是一个助手' });
+	assert.equal(m.visionCalls.length, 1);
+	assert.equal(m.visionCalls[0].provider, 'qwen');
+	assert.equal(m.visionCalls[0].model, 'qwen3-vl-flash');
+	assert.equal(m.backendCalls.length, 0);
+});
+
+test('whole-turn vision failure falls back to evidence + backend', async () => {
+	const m = makeMockCtx({ visionThrows: true });
+	apply(m.ctx, baseConfig({ ocrMinChars: 100000, fallbackProviders: [] }));
+	const adapter = m.adapterStore.adapter;
+	await consume(adapter, { provider: 'vision-router', model: 'deepseek-v4-pro-vision', messages: [imageMsg('img-strong-fail', '帮我看看这张图表的数据')], signal: void 0, system: '你是一个助手' });
+	assert.ok(m.visionCalls.length >= 1, 'whole-turn vision must have been attempted');
+	assert.equal(m.backendCalls.length, 1);
+	assert.match(texts(m.backendCalls[0].messages[0].content), /图像内容/);
+});
+
 test('image request: OCR-first, evidence injected, no vision call', async () => {
 	const m = makeMockCtx();
 	const cfg = baseConfig();
@@ -211,6 +258,31 @@ test('image request: OCR-first, evidence injected, no vision call', async () => 
 	assert.ok(!sent.some((b) => b.type === 'image'));
 	assert.match(texts(sent), /本地 OCR/);
 	assert.equal(m.readCalls.length, 1);
+});
+
+test('OCR works even when attachments has no saveImage (late/degraded store)', async () => {
+	const m = makeMockCtx({ noSaveImage: true });
+	const cfg = baseConfig();
+	apply(m.ctx, cfg);
+	const adapter = m.adapterStore.adapter;
+	await consume(adapter, { provider: 'vision-router', model: 'deepseek-v4-flash-vision', messages: [imageMsg('img-no-save')], signal: void 0 });
+	assert.equal(m.visionCalls.length, 0);
+	assert.equal(m.backendCalls.length, 1);
+	assert.match(texts(m.backendCalls[0].messages[0].content), /本地 OCR/);
+});
+
+test('attachments arriving after apply are picked up lazily', async () => {
+	const m = makeMockCtx({ lateAttachments: true });
+	const cfg = baseConfig();
+	apply(m.ctx, cfg);
+	// 服务晚到：此刻 attachments 尚不可用，先证明路由仍注册
+	assert.ok(m.adapterStore !== void 0);
+	m.attachStore = m.realAttachments;
+	const adapter = m.adapterStore.adapter;
+	await consume(adapter, { provider: 'vision-router', model: 'deepseek-v4-flash-vision', messages: [imageMsg('img-late-attach')], signal: void 0 });
+	assert.equal(m.visionCalls.length, 0);
+	assert.equal(m.backendCalls.length, 1);
+	assert.match(texts(m.backendCalls[0].messages[0].content), /本地 OCR/);
 });
 
 test('cache hit: same attachment does not re-run OCR or vision', async () => {
@@ -357,4 +429,19 @@ test('API failure: vision stream error -> fail-soft placeholder, backend still r
 	await consume(adapter, { provider: 'vision-router', model: 'deepseek-v4-pro-vision', messages: [imageMsg('img-api-fail')], signal: void 0 });
 	assert.equal(m.backendCalls.length, 1);
 	assert.match(texts(m.backendCalls[0].messages[0].content), /图像内容/);
+});
+
+test('failed cache entries are not reused; next request retries vision', async () => {
+	const m = makeMockCtx({ visionThrows: true });
+	const cfg = baseConfig({ ocrMinChars: 100000, fallbackProviders: [] });
+	apply(m.ctx, cfg);
+	const adapter = m.adapterStore.adapter;
+	const options = { provider: 'vision-router', model: 'deepseek-v4-pro-vision', messages: [imageMsg('img-retry')], signal: void 0 };
+	await consume(adapter, options);
+	const afterFail = m.visionCalls.length;
+	assert.ok(afterFail >= 1);
+	m.visionThrows = false;
+	await consume(adapter, options);
+	assert.ok(m.visionCalls.length > afterFail, 'failed cache must not block retry');
+	assert.match(texts(m.backendCalls[m.backendCalls.length - 1].messages[0].content), /图像内容|概要|本地 OCR/);
 });

@@ -58,6 +58,14 @@ const Config = z.object({
 	qwenProvider: z.string().default('qwen'),
 	/** Legacy alias of {@link visionModel}. */
 	qwenModel: z.string().default('qwen-vl-max'),
+	/** Virtual model id for the Flash tier. */
+	flashRouterModel: z.string().default('deepseek-v4-flash-vision'),
+	/** Backend DeepSeek model id for the Flash tier. */
+	flashDeepseekModel: z.string().default('deepseek-v4-flash'),
+	/** Primary vision model id for the Flash tier. */
+	flashVisionModel: z.string().default('qwen3-vl-flash'),
+	/** Which tier is listed first / used when no router model matches. */
+	defaultTier: z.union([z.const('pro'), z.const('flash')]).default('flash'),
 	/** Caption format used when evidence is injected as text. */
 	captionFormat,
 	/** structured mode: fail hard when the vision result is not evidence-shaped. */
@@ -125,4 +133,43 @@ export function normalizeLegacyConfig(config) {
 	if (explicitCaptionMaxTokens) out.maxTokens = out.captionMaxTokens;
 	else if (out.maxTokens !== void 0) out.captionMaxTokens = out.maxTokens;
 	return out;
+}
+
+/** Build one tier preset from a normalized config. */
+function buildPreset(config, tier) {
+	if (tier === 'flash') {
+		return {
+			id: 'flash',
+			routerModel: config.flashRouterModel ?? 'deepseek-v4-flash-vision',
+			deepseekProvider: config.deepseekProvider,
+			deepseekModel: config.flashDeepseekModel ?? 'deepseek-v4-flash',
+			visionProvider: config.visionProvider,
+			visionModel: config.flashVisionModel ?? 'qwen3-vl-flash',
+			name: 'DeepSeek V4 Flash (Vision Bridge)',
+			description: 'DeepSeek V4 Flash 文本 + 按需视觉代理（OCR/结构化证据优先，整轮路由仅用于强视觉任务）'
+		};
+	}
+	return {
+		id: 'pro',
+		routerModel: config.routerModel ?? 'deepseek-v4-pro-vision',
+		deepseekProvider: config.deepseekProvider,
+		deepseekModel: config.deepseekModel ?? 'deepseek-v4-pro',
+		visionProvider: config.visionProvider,
+		visionModel: config.visionModel ?? 'qwen-vl-max',
+		name: 'DeepSeek V4 Pro (Vision Bridge)',
+		description: 'DeepSeek V4 Pro 文本 + 按需视觉代理（OCR/结构化证据优先，整轮路由仅用于强视觉任务）'
+	};
+}
+
+/** Return both tiers in display order (default tier first). */
+export function listPresets(config) {
+	const pro = buildPreset(config, 'pro');
+	const flash = buildPreset(config, 'flash');
+	return config.defaultTier === 'flash' ? [flash, pro] : [pro, flash];
+}
+
+/** Resolve the preset for a selected router model; unknown models fall back to the default tier. */
+export function resolvePreset(config, model) {
+	const presets = listPresets(config);
+	return presets.find((preset) => preset.routerModel === model) ?? presets[0];
 }

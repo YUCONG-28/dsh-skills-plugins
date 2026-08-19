@@ -1,11 +1,15 @@
 # dsh-vision-bridge
 
-DeepSeek Harness 视觉桥接插件（v0.2 重构版）。
+DeepSeek Harness 视觉桥接插件（v0.3 双档位重构版）。
 
-**产品体验保持不变**：DeepSeek 仍是主模型，视觉模型按需代理。唯一变化是模型选择里多了一个
-**image-capable 虚拟模型** `vision-router / deepseek-v4-pro-vision`——选中它之后，官方图像准入
-直接通过（该模型声明 `inputModalities: [text, image]`），图片轮次自动走 OCR/结构化证据，
-强视觉任务才整轮交给 Qwen VL；纯文本轮次始终由 DeepSeek 处理。
+**产品体验保持不变**：DeepSeek 仍是主模型，视觉模型按需代理。模型选择里提供两个
+**image-capable 虚拟模型**：
+
+- `vision-router / deepseek-v4-flash-vision`（默认，快/省）
+- `vision-router / deepseek-v4-pro-vision`（强/稳）
+
+选中任意一个后，官方图像准入直接通过（声明 `inputModalities: [text, image]`），图片轮次自动走
+OCR/结构化证据，强视觉任务才整轮交给 Qwen VL；纯文本轮次由对应档位的 DeepSeek 处理。
 
 ## 硬性保证
 
@@ -25,8 +29,8 @@ DeepSeek Harness 视觉桥接插件（v0.2 重构版）。
   ├─ agent/request 整轮路由 → Qwen VL（改会话模型，回路由靠 turn 号）
   └─ llm/stream 描述兜底（BlockAssembler 依赖 dsh-llm 内部 API）
 
-新架构 (v0.2)：
-  用户选 vision-router / deepseek-v4-pro-vision（inputModalities 含 image）
+新架构 (v0.3)：
+  用户选 vision-router / deepseek-v4-flash-vision 或 deepseek-v4-pro-vision（inputModalities 含 image）
   ├─ 官方准入直接通过（无需任何 patch）
   ├─ adapter.stream 内部路由：
   │    ├─ 无图        → DeepSeek 直连
@@ -49,14 +53,17 @@ DeepSeek Harness 视觉桥接插件（v0.2 重构版）。
       name: dsh-vision-bridge
       config:
         mode: auto            # 默认；native/caption 为 legacy 模式
+        defaultTier: flash    # 默认 flash；可选 pro
         visionProvider: qwen
-        visionModel: qwen-vl-max
+        visionModel: qwen-vl-max          # Pro 档视觉引擎
+        flashVisionModel: qwen3-vl-flash  # Flash 档视觉引擎
         deepseekProvider: deepseek-official
         deepseekModel: deepseek-v4-pro
+        flashDeepseekModel: deepseek-v4-flash
 ```
 
-3. 在设置 → Models 中选择 `vision-router / deepseek-v4-pro-vision`。
-   无需运行任何 patch 脚本。
+3. 在设置 → Models 中选择 `vision-router / deepseek-v4-flash-vision`（默认）
+   或 `vision-router / deepseek-v4-pro-vision`。无需运行任何 patch 脚本。
 
 ## 配置（节选）
 
@@ -64,9 +71,13 @@ DeepSeek Harness 视觉桥接插件（v0.2 重构版）。
 | --- | --- | --- |
 | `mode` | `auto` | `auto` 证据优先 / `native` legacy 整轮路由 / `caption` legacy 描述桥 / `off` 禁用 |
 | `routerProvider` | `vision-router` | 虚拟 image-capable provider |
-| `routerModel` | `deepseek-v4-pro-vision` | 虚拟模型 id |
-| `deepseekProvider` / `deepseekModel` | `deepseek-official` / `deepseek-v4-pro` | 后端主模型 |
-| `visionProvider` / `visionModel` | `qwen` / `qwen-vl-max` | 主视觉引擎（旧键 `qwenProvider`/`qwenModel` 自动迁移） |
+| `routerModel` | `deepseek-v4-pro-vision` | Pro 档虚拟模型 id |
+| `flashRouterModel` | `deepseek-v4-flash-vision` | Flash 档虚拟模型 id |
+| `defaultTier` | `flash` | 默认档位：`flash` / `pro` |
+| `deepseekProvider` / `deepseekModel` | `deepseek-official` / `deepseek-v4-pro` | Pro 档后端主模型 |
+| `flashDeepseekModel` | `deepseek-v4-flash` | Flash 档后端主模型 |
+| `visionProvider` / `visionModel` | `qwen` / `qwen-vl-max` | Pro 档视觉引擎（旧键 `qwenProvider`/`qwenModel` 自动迁移） |
+| `flashVisionModel` | `qwen3-vl-flash` | Flash 档视觉引擎 |
 | `fallbackProviders` | `[]` | 视觉 fallback 链 |
 | `localOcr` / `ocrMinChars` | `true` / `40` | 本地 OCR 优先，达到字符数即跳过远程视觉 |
 | `cacheSize` / `diskCacheSize` | `256` / `1024` | L1 内存 / L2 磁盘缓存条数 |
@@ -111,14 +122,14 @@ JSONL 记录：`route, ocr_ms, vision_ms, cache_hit, provider, fallback_count, i
 ## 兼容性（P5/P7）
 
 - 能力探测（feature detection）而非版本号判断；任何可选能力缺失只 WARN + 禁用对应功能。
-- `ci/compat-matrix.sh`：local/latest/next 三目标跑 P6 审计、24 项 node:test、import smoke、npm pack、
+- `ci/compat-matrix.sh`：local/latest/next 三目标跑 P6 审计、31 项 node:test、import smoke、npm pack、
   以及真实 `dsh web` 启动冒烟（`.dsh-test` profile，临时端口，不碰 `~/.dsh`）。
 
 ## 测试
 
 ```bash
 cd plugins/dsh-vision-bridge
-node --test test/unit.test.mjs test/apply.test.mjs   # 24 项
+node --test test/unit.test.mjs test/apply.test.mjs   # 31 项
 node ci/check-p6.mjs .                                # P6 静态审计
 WEB_BOOT=1 bash ci/compat-matrix.sh                  # 全矩阵（含真实 web boot）
 ```
