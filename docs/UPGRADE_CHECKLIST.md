@@ -1,7 +1,7 @@
 # 升级回归清单（UPGRADE_CHECKLIST）
 
 > 每次升级后按此清单回归；🔴 项必测。
-> 最近一次：2026-08-18，dsh-web-ui-all 0.1.20 → 0.2.0
+> 最近一次：2026-08-19，dsh-web-ui-all 0.2.0 → 0.2.3（dsh core rc.7 基线）
 
 ## T1 基础冒烟（5 分钟）
 
@@ -36,9 +36,13 @@
 ## 升级后待办（用户终端执行）
 
 ```bash
+# 事务式升级（推荐）：snapshot → 测试 → canary → apply → 健康检查 → promote/自动回滚
+bash /Users/yucong/Documents/Deepseek\ Harness/dsh-skills-plugins/scripts/dsh-safe-upgrade.sh --yes
+
+# 手动同步（等价于 safe-upgrade 的 apply 阶段，供确认用）
 cd ~/.dsh/profiles/web && pnpm install          # 刷新 file: 插件副本（含 computer_observe 修复）
 bash /Users/yucong/Documents/Deepseek\ Harness/dsh-skills-plugins/fix-web-profile.sh
 bash /Users/yucong/Documents/Deepseek\ Harness/dsh-skills-plugins/sync-skills.sh
-bash /Users/yucong/Documents/Deepseek\ Harness/dsh-skills-plugins/plugins/dsh-vision-bridge/bin/apply-vision-patch.sh --check
+# 注意：vision-bridge v0.3+ 无需任何 node_modules 补丁（旧式补丁脚本已废弃、默认 NO-OP）
 # 重启 dsh web 后按上方未勾选项逐项确认
 ```

@@ -27,15 +27,17 @@ web profile `~/.dsh/profiles/web/package.json` 依赖（`file:` 引用本仓库�
 - **Skills**：复制到 `~/.dsh/skills/<name>/` 即被 dsh 识别；本仓库为唯一源，改动后需同步复制。
 - **Plugins**：`~/.dsh/profiles/web/package.json` 用 `file:` 依赖指向本仓库路径（pnpm 安装为硬链接/链接）；**整文件替换会断开硬链接**，改源码后需 `cp` 同步到 `~/.dsh/profiles/web/node_modules/<pkg>/` 并重启 dsh web。
 - **vision-bridge 额外注意**：
-  - `bin/apply-vision-patch.sh` 放宽 dsh-host-apiproxy 图像准入（作用于实际运行的安装副本：homebrew 全局或 npx 缓存）；dsh 重装或 `dsh plugin add` 触发 pnpm 重链后**必须重跑**。
+  - v0.3+ **无需任何 node_modules 补丁**：image-capable 虚拟 provider（`vision-router`）让官方图像准入直接通过；旧式补丁脚本已废弃、默认 NO-OP（如需旧式兜底需显式 `--force`）。
   - `scripts/ocr.swift` 随插件部署；可用 `swiftc -O ... -o ~/.dsh/vision-bridge-ocr` 预编译加速。
   - 运行参数可热配置（`~/.dsh/vision-bridge.json`，免重启）。
 
 ## 四、当前状态
 
 - git：`main` 分支与 `origin/main`（github.com/YUCONG-28/dsh-skills-plugins）同步；GitHub topics：`dsh-plugin` / `deepseek-harness` / `dsh` / `agent-skills`。
-- `dsh-web-ui-all` 已升级 **0.2.0**（2026-08-18），新增 skill-explorer / better-sidebar，移除 live-stats；回归测试见 [docs/UPGRADE_CHECKLIST.md](docs/UPGRADE_CHECKLIST.md)。
-- 兼容性矩阵与升级手册见 [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)、[docs/UPGRADE_RUNBOOK.md](docs/UPGRADE_RUNBOOK.md)；版本基线见 [versions.lock.json](versions.lock.json)。
+- `dsh-web-ui-all` 已升级 **0.2.3**（2026-08-19），新增 skill-explorer / better-sidebar，移除 live-stats；回归测试见 [docs/UPGRADE_CHECKLIST.md](docs/UPGRADE_CHECKLIST.md)。
+- 本机 dsh core 基线 **0.1.0-rc.7**（upstream next **0.1.0-rc.8**）；升级请走事务式 [scripts/dsh-safe-upgrade.sh](scripts/dsh-safe-upgrade.sh)。
+- 兼容性矩阵与升级手册见 [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)、[docs/UPGRADE_RUNBOOK.md](docs/UPGRADE_RUNBOOK.md)；版本基线见 [versions.lock.json](versions.lock.json)（CI 自动校验防漂移）。
+- **事务式升级/回滚**：`scripts/dsh-snapshot.sh`（LKG 快照，含 pnpm-lock.yaml / git SHA / DSH core 版本 / 插件版本 / 安装形态）→ `scripts/dsh-safe-upgrade.sh`（canary + 自动回滚）→ `scripts/dsh-rollback.sh latest`（崩溃后一键回滚）→ `scripts/dsh-healthcheck.sh`（崩溃保险丝）。
 - `plugins/dsh-computer-use`：`bin/cu-helper`、`memory/successes|trajectories`、`training/*` 等运行产物不入库（.gitignore）。
 - `plugins/dsh-web-pets`（v0.2.3）：TS + tsdown 构建（`src/host|client` → `lib/`），内置宠物素材 data-URI 内联，新增设置面板 / 自更新（`/api/web-pets/info|check|update`）/ DOM 增强信号（默认关闭）；单元测试 `pnpm test`（14 例）。
-- `dsh.bundle` manifest 已补齐：`dsh-computer-use`（真实 patch）/ `dsh-vision-bridge` / `dsh-desktop-pets`（占位 patch）。
+- `dsh.bundle` manifest 已补齐：四个插件均声明 bundle patch（内容为合法空数组占位，启用统一靠 profile 的 `cordis.patch.yml` insert，避免与 bundle patch 重复 insert 导致 dsh 启动失败）。

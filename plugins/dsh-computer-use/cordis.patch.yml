@@ -1,20 +1,12 @@
-# dsh-computer-use bundle patch: inserts its plugin row into the web profile roster.
-# Install via `dsh plugin --profile <name> add file:<path>/plugins/dsh-computer-use`
-# or as a `file:` dependency + this insert row in the profile's cordis.patch.yml.
-- insert:
-    - id: computer-use
-      name: dsh-computer-use
-      config:
-        enabled: true
-        announceToAgent: true
-        observationTtlMs: 0
-        actionTimeoutMs: 30000
-        settleMs: 250
-        maxNodes: 300
-        maxDepth: 24
-        interaction:
-          focusPolicy: preserve
-          keyboardPolicy: preserve
-          pointerInputPolicy: targeted
-        allowAllApps: false
-        grants: []
+# dsh-computer-use bundle patch（占位声明）
+#
+# 启用方式：在 profile 的 cordis.patch.yml 中 insert（id: computer-use），
+# 例如：
+#   - insert:
+#       - id: computer-use
+#         name: dsh-computer-use
+#         config:
+#           enabled: true
+# 此文件声明 dsh.bundle manifest，使本插件可被 dsh plugin add 标准安装；
+# 内容保持为合法空数组，避免与 profile patch 的 insert 重复导致 dsh 启动失败。
+[]

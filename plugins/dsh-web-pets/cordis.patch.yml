@@ -1,6 +1,10 @@
-# dsh-web-pets bundle patch: inserts its plugin row into the web profile roster.
-# Install via `dsh plugin --profile <name> add link:<path>/plugins/dsh-web-pets`
-# or as a `file:` dependency + this insert row in the profile's cordis.patch.yml.
-- insert:
-    - id: web-pets
-      name: 'dsh-web-pets'
+# dsh-web-pets bundle patch（占位声明）
+#
+# 启用方式：在 profile 的 cordis.patch.yml 中 insert（id: web-pets），
+# 例如：
+#   - insert:
+#       - id: web-pets
+#         name: dsh-web-pets
+# 此文件声明 dsh.bundle manifest，使本插件可被 dsh plugin add 标准安装；
+# 内容保持为合法空数组，避免与 profile patch 的 insert 重复导致 dsh 启动失败。
+[]
