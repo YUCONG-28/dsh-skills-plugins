@@ -21,7 +21,7 @@
     "@linxin666/dsh-client-ui-skin-blue-fantasy": "0.2.0",
     "dsh-better-sidebar": "0.13.0"
   },
-  "dshCore": "0.1.0-rc.7",
+  "dshCore": "0.1.0-rc.8",
   "upstreamNext": "0.1.0-rc.8",
   "removedSincePrevious": [
     "@linxin666/dsh-live-stats"
