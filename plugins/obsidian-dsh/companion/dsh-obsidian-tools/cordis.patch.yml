@@ -1,0 +1,6 @@
+# Companion bundle patch: mount vault-native tools into the host's tool registry.
+# Permission presets and the orchestrated agent preset are configuration layered
+# by the user's DSH profile; see README.md for the exact config/preset files.
+- insert:
+    - id: obsidian-tools
+      name: dsh-obsidian-tools

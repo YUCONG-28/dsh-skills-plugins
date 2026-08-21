@@ -1,0 +1,9 @@
+{
+  "id": "obsidian-dsh",
+  "name": "DeepSeek Harness for Obsidian",
+  "version": "0.1.0",
+  "minAppVersion": "1.7.2",
+  "description": "Native Obsidian integration for DeepSeek Harness (DSH): sidebar chat, streaming, tools, approvals, vault context, and Pro/Flash orchestrated mode.",
+  "author": "obsidian-dsh",
+  "isDesktopOnly": true
+}

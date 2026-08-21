@@ -1,0 +1,157 @@
+/* obsidian-dsh — native DeepSeek Harness sidebar. All colors derive from
+   Obsidian CSS variables so light/dark themes follow the active theme. */
+
+.odsh-host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  min-width: 0;
+  background: var(--background-secondary);
+  color: var(--text-normal);
+  font-size: var(--font-ui-small);
+}
+
+.odsh-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px 6px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.odsh-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--text-faint);
+}
+
+.odsh-state-running { background: var(--color-green); box-shadow: 0 0 4px var(--color-green); }
+.odsh-state-starting { background: var(--color-yellow); }
+.odsh-state-error { background: var(--color-red); }
+.odsh-state-stopped { background: var(--text-faint); }
+
+.odsh-status {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+.odsh-session-select { flex: 2; min-width: 0; }
+
+.odsh-iconbtn {
+  flex-shrink: 0;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-s);
+  padding: 2px 6px;
+  color: var(--text-muted);
+}
+
+.odsh-iconbtn:hover { background: var(--background-modifier-hover); color: var(--text-normal); }
+
+.odsh-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.odsh-toolbar-select { font-size: var(--font-ui-smaller); min-width: 0; flex: 1; }
+
+.odsh-messages {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  min-height: 0;
+}
+
+.odsh-welcome { color: var(--text-muted); text-align: center; margin-top: 24px; }
+
+.odsh-msg { max-width: 100%; min-width: 0; }
+.odsh-msg-user { align-self: flex-end; }
+.odsh-msg-user .odsh-bubble {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border-radius: var(--radius-m) var(--radius-m) var(--radius-s) var(--radius-m);
+  padding: 7px 11px;
+  max-width: 88%;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.odsh-msg-assistant .odsh-markdown { font-size: var(--font-ui-small); overflow-wrap: anywhere; }
+.odsh-markdown-streaming { color: var(--text-muted); }
+.odsh-markdown p { margin: 0.3em 0; }
+.odsh-markdown pre { white-space: pre-wrap; word-break: break-word; max-width: 100%; }
+
+.odsh-reasoning summary { color: var(--text-muted); cursor: pointer; }
+.odsh-reasoning pre { white-space: pre-wrap; color: var(--text-muted); font-size: var(--font-ui-smaller); }
+
+.odsh-tool { border-left: 2px solid var(--interactive-accent); padding: 4px 8px; margin: 2px 0; }
+.odsh-tool-summary { display: flex; gap: 6px; align-items: center; cursor: pointer; }
+.odsh-tool-name { font-weight: var(--font-medium); }
+.odsh-tool-args, .odsh-tool-result {
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 180px;
+  overflow: auto;
+  font-size: var(--font-ui-smaller);
+  background: var(--background-primary);
+  border-radius: var(--radius-s);
+  padding: 6px;
+}
+
+.odsh-tool-risk { font-size: var(--font-ui-smaller); padding: 1px 6px; border-radius: var(--radius-s); }
+.odsh-tool-risk-danger { background: var(--color-red); color: var(--text-on-accent); }
+.odsh-tool-risk-warning { background: var(--color-yellow); color: var(--text-normal); }
+.odsh-tool-risk-normal { background: var(--background-modifier-hover); color: var(--text-muted); }
+
+.odsh-notice { color: var(--text-muted); font-style: italic; }
+
+.odsh-streaming { color: var(--interactive-accent); font-size: var(--font-ui-smaller); animation: odsh-pulse 1.4s infinite; }
+@keyframes odsh-pulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
+
+.odsh-approvals { padding: 8px 12px; border-top: 1px solid var(--background-modifier-border); }
+.odsh-approval { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 6px; border: 1px solid var(--background-modifier-border); border-radius: var(--radius-m); margin-bottom: 6px; }
+.odsh-approval-tool { font-weight: var(--font-semibold); }
+.odsh-approval-reason { color: var(--text-muted); font-size: var(--font-ui-smaller); width: 100%; }
+.odsh-approve, .odsh-reject, .odsh-send { cursor: pointer; border: none; border-radius: var(--radius-s); padding: 4px 10px; }
+.odsh-approve, .odsh-send { background: var(--interactive-accent); color: var(--text-on-accent); }
+.odsh-reject { background: var(--background-modifier-error); color: var(--text-on-accent); }
+
+.odsh-chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 10px 0; }
+.odsh-chip {
+  background: var(--background-modifier-hover);
+  border-radius: var(--radius-s);
+  padding: 2px 8px;
+  font-size: var(--font-ui-smaller);
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+.odsh-chip-x { cursor: pointer; color: var(--text-muted); }
+
+.odsh-composer { display: flex; gap: 6px; padding: 8px 10px; }
+.odsh-textarea {
+  flex: 1;
+  resize: vertical;
+  min-height: 60px;
+  max-height: 240px;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  padding: 8px;
+  font-family: var(--font-text);
+}

@@ -1,0 +1,18 @@
+{
+  "name": "dsh-obsidian-tools",
+  "version": "0.1.0",
+  "description": "DeepSeek Harness companion bundle: vault-native obsidian_* tools, four permission presets, and the dsh-obsidian-orchestrated agent preset.",
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "exports": { ".": { "types": "./lib/index.d.ts", "default": "./lib/index.js" } },
+  "files": ["lib", "cordis.patch.yml", "README.md", "agent-presets"],
+  "dsh": { "bundle": { "patch": "./cordis.patch.yml" } },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "*",
+    "@deepseek-ai/dsh-tools": "*",
+    "@deepseek-ai/schemastery": "*"
+  },
+  "dependencies": { "yaml": "^2.7.0" },
+  "license": "MIT"
+}

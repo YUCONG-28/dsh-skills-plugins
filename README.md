@@ -23,7 +23,8 @@ dsh-skills-plugins/
 ├── plugins/                   # DSH 插件
 │   ├── dsh-vision-bridge/     # 视觉路由 + 描述兜底：纯文本主模型也能看图（含本地 OCR）
 │   ├── dsh-web-pets/          # Web 桌宠：浏览器内随会话状态换表情的桌宠（可替换形象）
-│   └── dsh-computer-use/      # Computer Use：macOS 桌面观察与操作（类似 Codex Computer Use）
+│   ├── dsh-computer-use/      # Computer Use：macOS 桌面观察与操作（类似 Codex Computer Use）
+│   └── obsidian-dsh/          # Obsidian 原生 DSH 客户端：侧栏聊天、流式、工具/审批、Pro-Flash 编排
 └── projects/                  # 独立项目（规范源）
     └── desktop-pets/          # macOS 原生多桌宠桌面库（AppKit/PyObjC，desktop-pets 原仓库内容）
 ```
@@ -160,6 +161,25 @@ scripts/petctl.sh remiel start          # 启动桌宠
 - **升级兼容**：升级前对照 [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)（上游 API 面矩阵）与 [docs/UPGRADE_RUNBOOK.md](docs/UPGRADE_RUNBOOK.md)（事务式流程），版本基线记录在 [versions.lock.json](versions.lock.json)（CI 自动校验，防漂移）。
 - **事务式升级 / 快速回滚**：推荐用 [scripts/dsh-safe-upgrade.sh](scripts/dsh-safe-upgrade.sh)（preflight → LKG snapshot → 全插件测试 → 隔离 DSH_HOME canary → apply → health-check → promote / 失败自动回滚）；升级前也可单独执行 [scripts/dsh-snapshot.sh](scripts/dsh-snapshot.sh)，崩溃后用 [scripts/dsh-rollback.sh](scripts/dsh-rollback.sh) latest 一键回滚（含 pnpm-lock.yaml / git SHA / DSH core 版本 / 插件版本 / 安装形态）。健康检查见 [scripts/dsh-healthcheck.sh](scripts/dsh-healthcheck.sh)。
 - 注意：`plugins/dsh-vision-bridge` 的打包范围由 `package.json` 的 `files` 字段决定（当前为 `lib` / `README.md` / `scripts` / `bin` / `cordis.patch.yml`）；`plugins/dsh-web-pets` 的打包范围同理（`lib` / `assets` / `src` / `scripts` / `cordis.patch.yml` / `CHANGELOG.md` / `README.md` / `README.en.md` / `LICENSE`）。
+
+### 插件：obsidian-dsh（Obsidian 原生 DSH 客户端）
+
+> 与上面三个 DSH profile 插件不同，本插件运行在 Obsidian 桌面端，作为本地 dsh web 的薄客户端（复用官方 /api 契约，不自建 agent runtime）。
+
+```bash
+# 构建
+cd plugins/obsidian-dsh && npm install && npm run build
+# 安装到 vault
+cp plugins/obsidian-dsh/main.js plugins/obsidian-dsh/manifest.json plugins/obsidian-dsh/styles.css <vault>/.obsidian/plugins/obsidian-dsh/
+```
+
+- 原生侧边栏（非 iframe）：流式聊天、思考折叠、tool 卡片、审批/提问确认、四档权限（Read Only / Ask Before Write / Workspace Write / Full Access）。
+- 上下文：当前笔记 / 选中文本 / 拖拽文件 / 外部 Git 仓库 workspace，注入带字节预算截断。
+- Agent 模式：Direct（单模型）或 Orchestrated（Pro 拆任务 -> 多个 Flash 并行 -> Pro Review，复用 DSH 自带 subagent/workflow 原语）。
+- 传输：Node http + 自研 RFC6455 WebSocket（loopback、无 Origin，过 DSH 浏览器信任围栏）；事件走 /api/events.mux + /api/events.host，重连自动重同步。
+- 测试：npm test（27 例，含真实 dsh web 契约冒烟）。
+- 可选伴侣 bundle：plugins/obsidian-dsh/companion/dsh-obsidian-tools/（vault 原生 obsidian_* 工具 + 四档权限 preset + orchestrated preset 参考）。
+- 详见 plugins/obsidian-dsh/README.md。
 
 ## Awesome List 投稿文案
 

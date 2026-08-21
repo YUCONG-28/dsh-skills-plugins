@@ -22,6 +22,8 @@ web profile `~/.dsh/profiles/web/package.json` 依赖（`file:` 引用本仓库�
 | `dsh-desktop-pets` | `projects/desktop-pets/integration/dsh-plugin` | `~/.dsh/profiles/web/node_modules/dsh-desktop-pets` | macOS 桌面宠物插件（DSH 会话事件 → 桌宠状态通道） |
 | `@linxin666/dsh-web-ui-all` | 第三方 npm（0.2.0） | `~/.dsh/profiles/web/node_modules/@linxin666/dsh-web-ui-all` | Web UI 全家桶（含 pet 界面入口、ssh/task-board/git-graph/aionui-panel/skin-center/skill-explorer/better-sidebar），非本仓库维护；0.2.0 起移除 live-stats |
 
+> 补充：plugins/obsidian-dsh/ 是 Obsidian 桌面插件（非 DSH profile 依赖）：它作为本地 dsh web 的薄客户端在 Obsidian 侧栏运行，不占用 ~/.dsh/profiles/web/package.json 依赖位；构建产物 main.js 已入库，可直接复制到 vault 的 .obsidian/plugins/obsidian-dsh/。
+
 ## 三、启用与同步机制
 
 - **Skills**：复制到 `~/.dsh/skills/<name>/` 即被 dsh 识别；本仓库为唯一源，改动后需同步复制。
