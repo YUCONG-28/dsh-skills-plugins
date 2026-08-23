@@ -11,3 +11,14 @@
 3. **Orchestrated preset**：`dsh-obsidian-orchestrated`，主会话用 Pro 模型，`tool-subagent`/`tool-workflow` 的子代理默认用 Flash 模型，persona 为「拆任务→并行 Flash→Review→整合」。
 
 安装：`dsh plugin --profile web add dsh-obsidian-tools`（或直接 `--patch` 本 bundle 的 cordis.patch.yml），并在 DSH profile 中叠加权限/编排配置。
+
+## Orchestrated preset (Pro main / Flash children)
+
+agent-presets/dsh-obsidian-orchestrated/ provides the Pro orchestrator -> parallel Flash -> Pro review configuration.
+- Main session model: Pro (plugin calls session.selectModel deepseek-v4-pro / high).
+- Children: tool-subagent and tool-subagent-fork set agentOptions.model = deepseek-v4-flash.
+
+Install:
+  cp -R agent-presets/dsh-obsidian-orchestrated ~/.dsh/.agent-presets/dsh-obsidian-orchestrated
+
+No restart needed: agentPreset.list discovers it live; the Obsidian plugin Orchestrated mode picks it automatically.
