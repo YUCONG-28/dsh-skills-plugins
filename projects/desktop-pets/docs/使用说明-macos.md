@@ -333,7 +333,7 @@ ls -l /tmp/desktop-pets-plugin.loaded
 <库根>/integration/dsh-plugin/install.sh
 ```
 
-脚本做两件事（与 vision-bridge 插件同款注册方式）：
+脚本做两件事（file: 依赖 + cordis insert 注册方式）：
 
 1. 把 `dsh-desktop-pets` 以 `file:` 依赖写进 `~/.dsh/profiles/web/package.json`
 2. 在 `~/.dsh/profiles/web/cordis.patch.yml` 追加 insert 条目

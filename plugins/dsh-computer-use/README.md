@@ -21,6 +21,8 @@
 | `computer_confirm` | 为敏感动作签发一次性 confirmationToken |
 | `computer_batch` | 批量执行 1~10 个确定性动作（Phase 3：一次执行一次验证，减少 LLM 往返） |
 
+> 视觉分析：`computer_observe({ screenshot: true })` 生成的截图 artifact 由 DeepSeek 主模型内置多模态直接分析（无需单独视觉路由/本地 OCR）。
+
 ## 安全模型
 
 - **TCC 权限**：观察/操作需要「辅助功能」；截图需要「屏幕录制」。权限缺失返回可操作的 `COMPUTER_PERMISSION_REQUIRED` / `COMPUTER_SCREEN_RECORDING_REQUIRED`，插件只引导授权、绝不程序化授权。
@@ -131,7 +133,7 @@ bash plugins/dsh-computer-use/scripts/install.sh
 | Phase | 模块 | 交付 |
 |---|---|---|
 | 0 | `benchmarks/` | 22 个真实桌面基准任务 + runner，`benchmark_baseline.json/csv`（后续一切对比基准） |
-| 1 | `router/model_router.py` | Fast/Pro 路由：默认 Fast+thinking off；高风险/视觉/规划/未知 UI/连续失败→Pro |
+| 1 | `router/model_router.py` | Fast/Pro 路由：默认 Fast+thinking off；高风险/视觉/规划/未知 UI/连续失败→Pro（视觉走 DeepSeek 内置多模态） |
 | 2 | `computer/router.py` | 工具优先级：shell→DOM/CDP→AX→shortcut→OCR→Vision（能结构化就不截图） |
 | 3 | `lib/batch.js` | `computer_batch` 工具：1~10 个确定性动作一次执行一次验证（减少 LLM 往返） |
 | 4 | `state/detector.py` | 状态指纹（窗口/AX 树/文本 hash）→ 稳定状态跳过截图与 Vision |

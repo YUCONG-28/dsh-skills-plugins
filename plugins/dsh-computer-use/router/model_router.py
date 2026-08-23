@@ -17,7 +17,7 @@ reasoning_effort=off；只有以下情况才升级到 PRO（+ 高级推理）：
 
 本模块是纯决策层（无副作用，便于单测）；输出 RoutingDecision 供：
   1) DSH 插件侧按轮次应用（agent/request 覆盖 provider/model/reasoningEffort，
-     类似 dsh-vision-bridge 的路由模式）；
+     直接使用 DeepSeek 内置多模态视觉）；
   2) 离线分析（analyze_trajectory）为训练/规则优化提供依据。
 
 用法：
@@ -44,8 +44,8 @@ DEFAULT_CONFIG = {
         "reasoning_effort": "high",
     },
     "vision": {
-        "provider": "qwen",
-        "model": "qwen-vl-max",
+        "provider": "deepseek-official",
+        "model": "deepseek-v4-flash-vision-exp",
         "reasoning_effort": "off",
     },
     "rules": {

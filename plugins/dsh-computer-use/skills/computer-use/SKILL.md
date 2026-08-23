@@ -83,8 +83,8 @@ metadata:
 
 ## 视觉验证协作
 
-- 主模型为纯文本模型时：优先依赖 accessibility 树文本（足够完成多数任务）。
-- 需要看真实像素时：`computer_observe({ screenshot: true })` 生成截图 artifact；该 artifact 可经视觉路由/本地 OCR（如 dsh-vision-bridge）解读，或交给视觉模型。
+- 优先依赖 accessibility 树文本（足够完成多数任务）。
+- 需要看真实像素时：`computer_observe({ screenshot: true })` 生成截图 artifact；该 artifact 由 DeepSeek 主模型内置多模态直接分析（无需额外视觉路由/本地 OCR）。
 - 截图是敏感数据：只用于任务需要的验证，不要外传。
 
 ## 边界

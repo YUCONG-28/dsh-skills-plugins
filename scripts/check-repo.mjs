@@ -6,7 +6,7 @@
  *   1. versions.lock.json 可解析，ownPlugins 与插件 package.json 版本一致
  *   2. 每个插件的 dsh.bundle.patch 存在且 insert id 非空
  *   3. 禁止 node_modules 补丁：'[vision-bridge:relaxed]' 只能出现在
- *      plugins/dsh-vision-bridge/bin/apply-vision-patch.sh（该脚本自身）
+ *      archive/dsh-vision-bridge/bin/apply-vision-patch.sh（已归档脚本自身）
  *   4. 根文档不得要求运行已废弃补丁：README / SUMMARY / docs 关键文档
  *      不得包含 'apply-vision-patch'
  *   5. 全部 shell 脚本可被 bash -n 解析（交给 self-test.sh，此处跳过）
@@ -44,7 +44,6 @@ if (!lock?.ownPlugins) {
 } else {
   const map = {
     'dsh-computer-use': 'plugins/dsh-computer-use/package.json',
-    'dsh-vision-bridge': 'plugins/dsh-vision-bridge/package.json',
     'dsh-web-pets': 'plugins/dsh-web-pets/package.json',
     'dsh-desktop-pets': 'projects/desktop-pets/integration/dsh-plugin/package.json',
   };
@@ -82,7 +81,7 @@ for (const dir of pluginDirs) {
 
 // 3. forbidden node_modules patch detection
 const MARKER = '[vision-bridge:relaxed]';
-const ALLOWED_PATCH_FILE = join(repo, 'plugins/dsh-vision-bridge/bin/apply-vision-patch.sh');
+const ALLOWED_PATCH_FILE = join(repo, 'archive/dsh-vision-bridge/bin/apply-vision-patch.sh');
 function walk(dir, out = []) {
   for (const entry of readdirSync(dir)) {
     if (entry === 'node_modules' || entry === '.git' || entry === '.pnpm-store' ||

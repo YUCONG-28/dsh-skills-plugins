@@ -104,8 +104,8 @@ canary_check() { # canary_check <label> <home-dir>
   done
   # pnpm 11 默认阻断未批准的生命周期脚本（ERR_PNPM_IGNORED_BUILDS），对 file: 依赖
   # 会生成 "set this to true or false" 占位并要求交互式 approve-builds。
-  # canary 是隔离验证环境，直接开启 dangerouslyAllowAllBuilds（vision-bridge 的
-  # postinstall 编译 OCR 本身 fail-soft；node-pty/ssh2 原生构建按需执行）。
+  # canary 是隔离验证环境，直接开启 dangerouslyAllowAllBuilds（插件 postinstall 均 fail-soft；
+  # node-pty/ssh2 原生构建按需执行）。
   if [ -f "$c_home/profiles/$PROFILE/pnpm-workspace.yaml" ]; then
     perl -pi -e 's/set this to true or false/true/g' "$c_home/profiles/$PROFILE/pnpm-workspace.yaml"
     grep -q '^dangerouslyAllowAllBuilds' "$c_home/profiles/$PROFILE/pnpm-workspace.yaml" \

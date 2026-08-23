@@ -2,6 +2,8 @@
 
 > 每次升级后按此清单回归；🔴 项必测。
 > 最近一次：2026-08-19，dsh-web-ui-all 0.2.0 → 0.2.3（dsh core rc.7 基线）
+>
+> **归档说明（2026-08-23）**：`dsh-vision-bridge` 已归档（`archive/dsh-vision-bridge/`），以下为其历史升级/兼容记录；视觉分析现由 DeepSeek 内置多模态完成。
 
 ## T1 基础冒烟（5 分钟）
 

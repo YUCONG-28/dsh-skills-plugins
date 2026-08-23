@@ -1,7 +1,7 @@
 # dsh-skills-plugins — 本地 Skill 与 Plugin 总览（SUMMARY）
 
 > 本文档汇总本机（macOS，dsh web profile）实际安装的 skills 与 plugins 及其与仓库的关系。
-> 更新日期：2026-08-18（dsh-web-ui-all 0.2.0 基线）
+> 更新日期：2026-08-23（dsh-vision-bridge 归档，视觉分析改用 DeepSeek 内置多模态）
 
 ## 一、Skills（`~/.dsh/skills/` 直接放置，非独立 git 仓库）
 
@@ -16,7 +16,6 @@ web profile `~/.dsh/profiles/web/package.json` 依赖（`file:` 引用本仓库�
 
 | 插件 | 仓库位置 | 安装副本 | 说明 |
 | --- | --- | --- | --- |
-| `dsh-vision-bridge` | `plugins/dsh-vision-bridge/` | `~/.dsh/profiles/web/node_modules/dsh-vision-bridge` | 自动视觉路由 + 结构化转述 + 本地 OCR（macOS Vision）+ 故障转移；md5 与安装副本一致 |
 | `dsh-web-pets` | `plugins/dsh-web-pets/` | `~/.dsh/profiles/web/node_modules/dsh-web-pets` | Web 桌宠（浏览器内随会话状态换表情，v0.2.3：TS+tsdown 工程、设置面板、一键更新），service 依赖 `sessions` |
 | `dsh-computer-use` | `plugins/dsh-computer-use/` | `~/.dsh/profiles/web/node_modules/dsh-computer-use` | Computer Use：macOS 桌面观察与操作（11 个 computer_* 工具 + computer-use Skill + Swift 原生 helper）；需要辅助功能/屏幕录制权限 |
 | `dsh-desktop-pets` | `projects/desktop-pets/integration/dsh-plugin` | `~/.dsh/profiles/web/node_modules/dsh-desktop-pets` | macOS 桌面宠物插件（DSH 会话事件 → 桌宠状态通道） |
@@ -28,10 +27,7 @@ web profile `~/.dsh/profiles/web/package.json` 依赖（`file:` 引用本仓库�
 
 - **Skills**：复制到 `~/.dsh/skills/<name>/` 即被 dsh 识别；本仓库为唯一源，改动后需同步复制。
 - **Plugins**：`~/.dsh/profiles/web/package.json` 用 `file:` 依赖指向本仓库路径（pnpm 安装为硬链接/链接）；**整文件替换会断开硬链接**，改源码后需 `cp` 同步到 `~/.dsh/profiles/web/node_modules/<pkg>/` 并重启 dsh web。
-- **vision-bridge 额外注意**：
-  - v0.3+ **无需任何 node_modules 补丁**：image-capable 虚拟 provider（`vision-router`）让官方图像准入直接通过；旧式补丁脚本已废弃、默认 NO-OP（如需旧式兜底需显式 `--force`）。
-  - `scripts/ocr.swift` 随插件部署；可用 `swiftc -O ... -o ~/.dsh/vision-bridge-ocr` 预编译加速。
-  - 运行参数可热配置（`~/.dsh/vision-bridge.json`，免重启）。
+- **视觉分析与 dsh-vision-bridge 归档**：DeepSeek V4 Flash 已内置多模态，视觉分析默认由主模型直接完成（含 Computer Use 截图）；`dsh-vision-bridge` 已归档（移至 `archive/dsh-vision-bridge/`），不再从 web profile 安装，Qwen/DashScope 视觉 provider 与 dsh-tool-describe-image 配置一并移除。
 
 ## 四、当前状态
 
@@ -42,4 +38,4 @@ web profile `~/.dsh/profiles/web/package.json` 依赖（`file:` 引用本仓库�
 - **事务式升级/回滚**：`scripts/dsh-snapshot.sh`（LKG 快照，含 pnpm-lock.yaml / git SHA / DSH core 版本 / 插件版本 / 安装形态）→ `scripts/dsh-safe-upgrade.sh`（canary + 自动回滚）→ `scripts/dsh-rollback.sh latest`（崩溃后一键回滚）→ `scripts/dsh-healthcheck.sh`（崩溃保险丝）。
 - `plugins/dsh-computer-use`：`bin/cu-helper`、`memory/successes|trajectories`、`training/*` 等运行产物不入库（.gitignore）。
 - `plugins/dsh-web-pets`（v0.2.3）：TS + tsdown 构建（`src/host|client` → `lib/`），内置宠物素材 data-URI 内联，新增设置面板 / 自更新（`/api/web-pets/info|check|update`）/ DOM 增强信号（默认关闭）；单元测试 `pnpm test`（14 例）。
-- `dsh.bundle` manifest 已补齐：四个插件均声明 bundle patch（内容为合法空数组占位，启用统一靠 profile 的 `cordis.patch.yml` insert，避免与 bundle patch 重复 insert 导致 dsh 启动失败）。
+- `dsh.bundle` manifest 已补齐：活动插件均声明 bundle patch（内容为合法空数组占位，启用统一靠 profile 的 `cordis.patch.yml` insert，避免与 bundle patch 重复 insert 导致 dsh 启动失败）；`dsh-vision-bridge` 已归档不再声明。

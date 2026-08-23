@@ -2,6 +2,8 @@
 
 > 日期：2026-08-18 · 范围：dsh-skills-plugins 仓库全部内容（skills / plugins / projects）
 > 环境：macOS，dsh web profile（@linxin666/dsh-web-ui-all 0.2.0）
+>
+> **归档说明（2026-08-23）**：`dsh-vision-bridge` 已归档（`archive/dsh-vision-bridge/`），以下为其历史测试记录；视觉分析现由 DeepSeek 内置多模态完成。
 
 ## 结论
 

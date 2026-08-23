@@ -3,6 +3,8 @@
 > 记录本仓库每个插件/skill 依赖的**上游 API 面**与风险等级，供升级前对照。
 > 更新日期：2026-08-19（dsh-web-ui-all 0.2.3 验证基线；dsh core rc.7，upstream next rc.8）
 > 配套文档：[UPGRADE_RUNBOOK.md](UPGRADE_RUNBOOK.md) · [versions.lock.json](../versions.lock.json) · [UPGRADE_CHECKLIST.md](UPGRADE_CHECKLIST.md)
+>
+> **归档说明（2026-08-23）**：`dsh-vision-bridge` 已归档（`archive/dsh-vision-bridge/`），以下为其历史兼容性记录；视觉分析现由 DeepSeek 内置多模态完成。
 
 ## 风险等级约定
 

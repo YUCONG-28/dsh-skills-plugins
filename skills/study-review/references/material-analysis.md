@@ -26,7 +26,7 @@
 | 表格 | `.xls` | 有 LibreOffice 时转换；否则记录「待转换」 |
 | 笔记本 | `.ipynb` | python3 stdlib json：按 cell 提取（markdown/code/输出摘要），标记 Code Cell N |
 | 代码 | `.py` / `.r` / `.m` / `.sql` / `.js` / `.cpp` 等 | 直接读取，按 section/函数切分 |
-| 图像 | `.png` / `.jpg` / `.jpeg` / `.gif` / `.webp` / `.bmp` | `read_image` 视觉分析（本机 vision-bridge 自动路由视觉模型） |
+| 图像 | `.png` / `.jpg` / `.jpeg` / `.gif` / `.webp` / `.bmp` | `read_image` 视觉分析（DeepSeek 主模型内置多模态直接分析） |
 | 矢量 | `.svg` | 先读 XML 文本（文本/结构可提取），图形部分按图像处理 |
 | 网页 | `.html` / `.htm` | `textutil -convert txt` 或直接读 |
 

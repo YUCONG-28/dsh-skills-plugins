@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 安装 dsh-desktop-pets 联动插件到 DSH web profile（与 vision-bridge 同款注册方式）：
+# 安装 dsh-desktop-pets 联动插件到 DSH web profile（file: 依赖 + cordis insert 注册方式）：
 #   1) 把本插件以 file: 依赖写进 ~/.dsh/profiles/web/package.json
 #   2) 在 ~/.dsh/profiles/web/cordis.patch.yml 里 insert 插件条目
 # 之后重启 `dsh web` 生效（插件加载后写 /tmp/desktop-pets-dsh.loaded 自检标记）。

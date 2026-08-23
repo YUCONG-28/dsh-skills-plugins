@@ -1,6 +1,7 @@
 {
   "name": "dsh-vision-bridge",
   "version": "0.3.3",
+  "archived": true,
   "description": "DeepSeek Harness plugin: image-capable virtual provider (vision-router Pro/Flash) + OCR-first evidence routing, Apple Vision local OCR, structured evidence cache and fail-soft compatibility.",
   "type": "module",
   "main": "lib/index.js",

@@ -34,7 +34,6 @@ done
 
 # 插件映射：源码相对路径:安装副本名
 PLUGINS=(
-  "plugins/dsh-vision-bridge:dsh-vision-bridge"
   "plugins/dsh-web-pets:dsh-web-pets"
   "plugins/dsh-computer-use:dsh-computer-use"
   "projects/desktop-pets/integration/dsh-plugin:dsh-desktop-pets"
@@ -136,8 +135,6 @@ echo "--- 校验注入/路由声明："
 grep -H "export const inject" \
   "$PROFILE_NM/dsh-desktop-pets/lib/index.js" \
   "$PROFILE_NM/dsh-web-pets/lib/index.js" 2>/dev/null || true
-grep -H "system: undefined" \
-  "$PROFILE_NM/dsh-vision-bridge/lib/index.js" 2>/dev/null || echo "注意: vision-bridge 未找到 developer-role 兼容处理"
 
 echo ""
 if [ "$FAIL" -ne 0 ]; then

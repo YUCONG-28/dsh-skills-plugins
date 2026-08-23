@@ -28,30 +28,6 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm test
 
-  vision-bridge:
-    name: dsh-vision-bridge (audit + tests + pack)
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: plugins/dsh-vision-bridge
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 9
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-          cache-dependency-path: plugins/dsh-vision-bridge/pnpm-lock.yaml
-      - run: pnpm install --frozen-lockfile
-      - run: node ci/check-p6.mjs .
-      - run: pnpm test
-      - name: Import smoke
-        run: node --input-type=module -e 'import("./lib/index.js").then(m => { if (!m.apply || !m.Config || !m.name) process.exit(1); }).catch(() => process.exit(1))'
-      - name: npm pack dry-run
-        run: npm pack --dry-run --cache /tmp/vb-npm-cache
-
   computer-use:
     name: dsh-computer-use (node:test + python)
     runs-on: ubuntu-latest

@@ -4,8 +4,7 @@
  *
  * 仓库侧（CI 必跑）：
  *   - versions.lock.json 可解析且结构完整；
- *   - ownPlugins 与各插件 package.json 版本一致（防止再次出现
- *     dsh-vision-bridge 0.1.0 vs 实际 0.3.3 之类的漂移）。
+ *   - ownPlugins 与各活动插件 package.json 版本一致（防止版本漂移）。
  *
  * profile 侧（本地 / dsh-safe-upgrade.sh preflight，--profile 指定）：
  *   - verified 第三方版本 vs ~/.dsh/profiles/<name>/node_modules/<pkg>/package.json；

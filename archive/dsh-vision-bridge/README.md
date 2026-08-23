@@ -1,4 +1,8 @@
-# dsh-vision-bridge
+# dsh-vision-bridge（已归档 / ARCHIVED）
+
+> **归档说明（这以后不再维护/安装）**：DeepSeek V4 Flash 已内置多模态，视觉分析改由 DeepSeek
+> 主模型直接完成，本插件不再需要。本目录仅作历史存档保留，不再随仓库活动插件更新，也从本机
+> web profile 卸载。此前由它承担的「图片轮次路由 + 本地 OCR + Qwen VL 兜底」能力由主模型内置视觉替代。
 
 DeepSeek Harness 视觉桥接插件（v0.3 双档位重构版）。
 

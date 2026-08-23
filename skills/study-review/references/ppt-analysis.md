@@ -49,7 +49,7 @@ Slide 3 — 条件概率与贝叶斯定理
    a. 本机有 LibreOffice：`soffice --headless --convert-to pdf deck.pptx` → `scripts/extract_pdf.py --render-dpi 150` 渲染整页；
    b. 否则用 `scripts/extract_ooxml.py --media <dir>` 抽取嵌入媒体（`media_map.json` 给出 media→Slide 映射），对应该页的图片用 `read_image` 查看；
    c. 若该页图形是矢量形状组合（非嵌入图片），无法抽取 → 标记 `[Visual requires manual review]`。
-2. **用 `read_image` 工具分析每张图**（本机 vision-bridge 会把含图轮次自动路由到视觉模型；输出含结构化描述/OCR/版面/不确定性）。提取目标：
+2. **用 `read_image` 工具分析每张图**（DeepSeek 主模型内置多模态直接分析；输出含描述/OCR/版面/不确定性）。提取目标：
    - 图中变量与单位
    - 横轴/纵轴含义、刻度
    - 趋势（上升/下降/峰值/平台期）、比较关系（组间差异）

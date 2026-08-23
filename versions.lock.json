@@ -1,7 +1,7 @@
 {
-  "updatedAt": "2026-08-19",
+  "updatedAt": "2026-08-23",
   "profile": "web",
-  "note": "验证过的上游版本组合。升级前对照 docs/COMPATIBILITY.md 的 🔴 项回归，流程见 docs/UPGRADE_RUNBOOK.md（推荐使用事务式 scripts/dsh-safe-upgrade.sh，崩溃后用 scripts/dsh-rollback.sh latest 一键回滚）。versions.lock 由 scripts/check-versions.mjs 在 CI 中自动校验，防漂移。",
+  "note": "验证过的上游版本组合。升级前对照 docs/COMPATIBILITY.md 的 🔴 项回归，流程见 docs/UPGRADE_RUNBOOK.md（推荐使用事务式 scripts/dsh-safe-upgrade.sh，崩溃后用 scripts/dsh-rollback.sh latest 一键回滚）。versions.lock 由 scripts/check-versions.mjs 在 CI 中自动校验，防漂移。dsh-vision-bridge 已归档（移至 archive/），不再列入 ownPlugins。",
   "verified": {
     "@linxin666/dsh-web-ui-all": "0.2.3",
     "@linxin666/dsh-client-ui-aionui-panel": "0.2.3",
@@ -28,7 +28,6 @@
   ],
   "ownPlugins": {
     "dsh-computer-use": "0.1.0",
-    "dsh-vision-bridge": "0.3.3",
     "dsh-web-pets": "0.2.3",
     "dsh-desktop-pets": "0.1.0"
   }

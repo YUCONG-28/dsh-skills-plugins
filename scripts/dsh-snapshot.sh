@@ -147,7 +147,6 @@ const files = (fs.readFileSync(process.env.SNAP_FILES_TMP, 'utf8').trim().split(
 const repo = process.env.SNAP_REPO;
 const ownPluginPaths = {
   'dsh-computer-use': 'plugins/dsh-computer-use/package.json',
-  'dsh-vision-bridge': 'plugins/dsh-vision-bridge/package.json',
   'dsh-web-pets': 'plugins/dsh-web-pets/package.json',
   'dsh-desktop-pets': 'projects/desktop-pets/integration/dsh-plugin/package.json',
 };

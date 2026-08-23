@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 # =============================================================================
-# run-plugin-tests.sh —— 运行本仓库三个插件的全部自动化测试
+# run-plugin-tests.sh —— 运行本仓库活动插件的全部自动化测试
 #
 # 覆盖：
 #   dsh-web-pets    构建 + node:test（14 例）
-#   dsh-vision-bridge  P6 审计 + node:test（unit+apply）+ import smoke + npm pack dry-run
 #   dsh-computer-use  node:test（unit/batch/apply-smoke）+ python 单测（9 个文件）
 #
 # 用法：bash scripts/run-plugin-tests.sh [--skip-install] [--repo <path>]
@@ -53,18 +52,6 @@ if [ -d "$WP" ]; then
   run "dsh-web-pets: pnpm test（build + node:test）" bash -c 'cd "$1" && pnpm test' bash "$WP"
 else
   echo "跳过 dsh-web-pets（目录不存在）"; FAIL=1
-fi
-
-# ---------- vision-bridge ----------
-VB="$REPO/plugins/dsh-vision-bridge"
-if [ -d "$VB" ]; then
-  install_plugin "$VB" || true
-  run "dsh-vision-bridge: P6 静态审计" bash -c 'cd "$1" && node ci/check-p6.mjs .' bash "$VB"
-  run "dsh-vision-bridge: node:test（unit + apply）" bash -c 'cd "$1" && node --test test/unit.test.mjs test/apply.test.mjs' bash "$VB"
-  run "dsh-vision-bridge: import smoke" import_smoke "$VB"
-  run "dsh-vision-bridge: npm pack dry-run" bash -c 'cd "$1" && npm pack --dry-run --cache /tmp/vb-npm-cache >/tmp/vb-pack.log 2>&1' bash "$VB"
-else
-  echo "跳过 dsh-vision-bridge（目录不存在）"; FAIL=1
 fi
 
 # ---------- computer-use ----------

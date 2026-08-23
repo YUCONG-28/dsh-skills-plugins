@@ -34,7 +34,7 @@ step "2. check-versions.mjs 漂移检测（fixture）"
 TMP="$(mktemp -d /tmp/dsh-selftest.XXXXXX)"
 trap 'rm -rf "$TMP"' EXIT
 FIX="$TMP/fixture"
-mkdir -p "$FIX/plugins/dsh-vision-bridge" "$FIX/plugins/dsh-computer-use" "$FIX/plugins/dsh-web-pets" "$FIX/projects/desktop-pets/integration/dsh-plugin"
+mkdir -p "$FIX/plugins/dsh-computer-use" "$FIX/plugins/dsh-web-pets" "$FIX/projects/desktop-pets/integration/dsh-plugin"
 cat > "$FIX/versions.lock.json" <<'EOF'
 {
   "updatedAt": "2026-08-19",
@@ -42,22 +42,20 @@ cat > "$FIX/versions.lock.json" <<'EOF'
   "verified": {},
   "ownPlugins": {
     "dsh-computer-use": "0.1.0",
-    "dsh-vision-bridge": "0.1.0",
     "dsh-web-pets": "0.2.3",
     "dsh-desktop-pets": "0.1.0"
   }
 }
 EOF
 echo '{"version":"0.1.0"}' > "$FIX/plugins/dsh-computer-use/package.json"
-echo '{"version":"0.3.3"}' > "$FIX/plugins/dsh-vision-bridge/package.json"
-echo '{"version":"0.2.3"}' > "$FIX/plugins/dsh-web-pets/package.json"
+echo '{"version":"0.2.4"}' > "$FIX/plugins/dsh-web-pets/package.json"
 echo '{"version":"0.1.0"}' > "$FIX/projects/desktop-pets/integration/dsh-plugin/package.json"
 if node "$SCRIPT_DIR/check-versions.mjs" --repo "$FIX" >/dev/null 2>&1; then
-  bad "check-versions 未检测到 vision-bridge 0.1.0 vs 0.3.3 漂移"
+  bad "check-versions 未检测到 dsh-web-pets 0.2.3 vs 0.2.4 漂移"
 else
   out="$(node "$SCRIPT_DIR/check-versions.mjs" --repo "$FIX" 2>&1)"
-  if printf '%s' "$out" | grep -q 'dsh-vision-bridge'; then
-    ok "check-versions 检测到 dsh-vision-bridge 漂移"
+  if printf '%s' "$out" | grep -q 'dsh-web-pets'; then
+    ok "check-versions 检测到 dsh-web-pets 漂移"
   else
     bad "check-versions 退出非 0 但输出不含漂移明细: $(printf '%s' "$out" | head -3)"
   fi
@@ -78,7 +76,7 @@ cat > "$SHOME/profiles/web/package.json" <<'EOF'
   "name": "dsh-profile-web",
   "private": true,
   "dependencies": {
-    "dsh-vision-bridge": "file:/tmp/dsh-vision-bridge"
+    "dsh-web-pets": "file:/tmp/dsh-web-pets"
   }
 }
 EOF
@@ -94,7 +92,7 @@ const m = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));
 const need = ["createdAt","repoCommit","dshVersion","profileDir","ownPlugins","files","installShapes","launchCommand"];
 for (const k of need) { if (!(k in m)) { console.error("缺少字段: " + k); process.exit(1); } }
 if (!Array.isArray(m.files) || m.files.length === 0) { console.error("files 为空"); process.exit(1); }
-if (!m.ownPlugins["dsh-vision-bridge"]) { console.error("ownPlugins 缺 dsh-vision-bridge"); process.exit(1); }
+if (!m.ownPlugins["dsh-web-pets"]) { console.error("ownPlugins 缺 dsh-web-pets"); process.exit(1); }
 ' "$MANIFEST"; then
   ok "manifest.json 字段齐全（repoCommit/dshVersion/ownPlugins/files/installShapes）"
 else

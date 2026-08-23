@@ -26,7 +26,7 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/dsh-lib.sh"
 URL=""
 PID=""
 LOG=""
-PLUGINS="vision-bridge,computer-use,web-pets,dsh-web-ui-all"
+PLUGINS="computer-use,web-pets,dsh-web-ui-all"
 TIMEOUT=30
 JSON=0
 ALLOW=()

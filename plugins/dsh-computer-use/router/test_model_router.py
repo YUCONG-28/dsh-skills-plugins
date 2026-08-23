@@ -37,7 +37,7 @@ class TestDecide(unittest.TestCase):
     def test_vision_required_goes_vision(self):
         d = decide(RoutingContext(action_type="observe", needs_vision=True))
         self.assertEqual(d.tier, "vision")
-        self.assertIn("vl", d.model)
+        self.assertIn("deepseek-v4-flash-vision-exp", d.model)
 
     def test_high_risk_text_detected(self):
         d = decide(RoutingContext(action_type="click", action_text="git push --force 到远程"))
