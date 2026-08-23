@@ -47,6 +47,7 @@ export class ObsidianDshView extends ItemView {
   private unsubscribeCenter: (() => void) | null = null;
   private noteContext: { path: string; selection: string | null } | null = null;
   private attachedFiles: { path: string; content: string }[] = [];
+  private presetIds: string[] | null = null;
 
   constructor(leaf: WorkspaceLeaf, private readonly plugin: ObsidianDshPlugin) {
     super(leaf);
@@ -110,7 +111,9 @@ export class ObsidianDshView extends ItemView {
     if (!this.apiUrl) return;
     this.mux = new EventStream(this.apiUrl, '/api/events.mux', {
       onFrame: (rpcId, payload) => this.handleMux(rpcId, payload as MuxFrameRaw['payload']),
-      onState: (state) => { if (state === 'connected') void this.resyncAfterReconnect(); },
+      onState: (state) => {
+        if (state === 'connected') void this.resyncAfterReconnect();
+      },
     });
     this.hostStream = new EventStream(this.apiUrl, '/api/events.host', {
       onFrame: (_rpcId, payload) => this.handleHost(payload as HostFrameRaw['payload']),
@@ -125,7 +128,11 @@ export class ObsidianDshView extends ItemView {
       this.center?.ingest(rpcId, payload);
       return;
     }
-    this.store.applyMux(rpcId, payload);
+    try {
+      this.store.applyMux(rpcId, payload);
+    } catch {
+      // never let a single bad frame break the stream
+    }
     if (payload.type === 'session/event' && payload.sessionId === this.sessionId) this.scheduleRender();
   }
 
@@ -242,11 +249,31 @@ export class ObsidianDshView extends ItemView {
   private async newSession(): Promise<void> {
     if (!this.api) { await this.ensureLoaded(); if (!this.api) return; }
     const cwd = this.workspacePath ?? this.vaultPath();
-    const preset = this.plugin.settings.agentMode === 'orchestrated' ? this.plugin.settings.orchestratedPreset : undefined;
-    const sessionId = await this.api.createSession({ cwd, agentPreset: preset });
+    let agentPreset: string | undefined;
+    if (this.plugin.settings.agentMode === 'orchestrated') {
+      agentPreset = await this.presetAvailable(this.plugin.settings.orchestratedPreset)
+        ? this.plugin.settings.orchestratedPreset
+        : undefined;
+    }
+    const sessionId = await this.api.createSession({ cwd, agentPreset });
     if (!sessionId) { new Notice('obsidian-dsh：创建会话失败'); return; }
+    if (this.plugin.settings.agentMode === 'orchestrated') await this.applyProModel(sessionId);
     await this.reloadSessions();
     await this.selectSession(sessionId);
+  }
+
+  private async presetAvailable(id: string): Promise<boolean> {
+    if (this.presetIds === null) {
+      const presets = await this.api?.listAgentPresets() ?? [];
+      this.presetIds = presets.map((p) => p.id);
+    }
+    return (this.presetIds ?? []).includes(id);
+  }
+
+  private async applyProModel(sessionId: string): Promise<void> {
+    if (!this.api) return;
+    const s = this.plugin.settings;
+    await this.api.selectModel(sessionId, s.proProvider, s.proModel, s.proEffort).catch(() => undefined);
   }
 
   private async archiveCurrent(): Promise<void> {
@@ -364,6 +391,7 @@ export class ObsidianDshView extends ItemView {
       files: this.attachedFiles,
     };
     const mode = this.plugin.settings.agentMode;
+    if (mode === 'orchestrated') await this.applyProModel(this.sessionId);
     const base = mode === 'orchestrated' ? buildOrchestratedPrompt(text) : buildDirectPrompt(text);
     const prompt = composePrompt(base, collected, this.plugin.settings.contextMaxNoteBytes);
     this.composerEl.value = '';
@@ -372,7 +400,10 @@ export class ObsidianDshView extends ItemView {
     this.renderChips();
     const rpcId = this.api.newPromptRpcId();
     const result = await this.api.prompt(this.sessionId, prompt, 'queue', rpcId);
-    if (!result.ok) new Notice(`obsidian-dsh：${result.error ?? '发送失败'}`);
+    if (!result.ok) {
+      const message = (result as { error?: string }).error ?? '发送失败';
+      new Notice('obsidian-dsh：' + message);
+    }
   }
 
   private scheduleRender(): void {

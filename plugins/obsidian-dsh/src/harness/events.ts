@@ -77,6 +77,8 @@ export class EventStream {
       /* close follows; reconnect happens there to avoid double scheduling */
     });
     socket.on("close", () => this.scheduleReconnect());
+    // START the connection — without this the stream never opens and no frames arrive.
+    socket.connect();
   }
 
   private scheduleReconnect(): void {

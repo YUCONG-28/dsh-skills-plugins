@@ -926,6 +926,7 @@ var EventStream = class {
     socket.on("error", () => {
     });
     socket.on("close", () => this.scheduleReconnect());
+    socket.connect();
   }
   scheduleReconnect() {
     if (this.stopped) return;
@@ -1524,6 +1525,7 @@ var ObsidianDshView = class extends import_obsidian5.ItemView {
   unsubscribeCenter = null;
   noteContext = null;
   attachedFiles = [];
+  presetIds = null;
   getViewType() {
     return VIEW_TYPE_DSH;
   }
@@ -1603,7 +1605,10 @@ var ObsidianDshView = class extends import_obsidian5.ItemView {
       this.center?.ingest(rpcId, payload);
       return;
     }
-    this.store.applyMux(rpcId, payload);
+    try {
+      this.store.applyMux(rpcId, payload);
+    } catch {
+    }
     if (payload.type === "session/event" && payload.sessionId === this.sessionId) this.scheduleRender();
   }
   handleHost(payload) {
@@ -1711,14 +1716,30 @@ var ObsidianDshView = class extends import_obsidian5.ItemView {
       if (!this.api) return;
     }
     const cwd = this.workspacePath ?? this.vaultPath();
-    const preset = this.plugin.settings.agentMode === "orchestrated" ? this.plugin.settings.orchestratedPreset : void 0;
-    const sessionId = await this.api.createSession({ cwd, agentPreset: preset });
+    let agentPreset;
+    if (this.plugin.settings.agentMode === "orchestrated") {
+      agentPreset = await this.presetAvailable(this.plugin.settings.orchestratedPreset) ? this.plugin.settings.orchestratedPreset : void 0;
+    }
+    const sessionId = await this.api.createSession({ cwd, agentPreset });
     if (!sessionId) {
       new import_obsidian5.Notice("obsidian-dsh\uFF1A\u521B\u5EFA\u4F1A\u8BDD\u5931\u8D25");
       return;
     }
+    if (this.plugin.settings.agentMode === "orchestrated") await this.applyProModel(sessionId);
     await this.reloadSessions();
     await this.selectSession(sessionId);
+  }
+  async presetAvailable(id) {
+    if (this.presetIds === null) {
+      const presets = await this.api?.listAgentPresets() ?? [];
+      this.presetIds = presets.map((p) => p.id);
+    }
+    return (this.presetIds ?? []).includes(id);
+  }
+  async applyProModel(sessionId) {
+    if (!this.api) return;
+    const s = this.plugin.settings;
+    await this.api.selectModel(sessionId, s.proProvider, s.proModel, s.proEffort).catch(() => void 0);
   }
   async archiveCurrent() {
     if (!this.api || !this.sessionId) return;
@@ -1836,6 +1857,7 @@ ${text}` : text;
       files: this.attachedFiles
     };
     const mode = this.plugin.settings.agentMode;
+    if (mode === "orchestrated") await this.applyProModel(this.sessionId);
     const base = mode === "orchestrated" ? buildOrchestratedPrompt(text) : buildDirectPrompt(text);
     const prompt = composePrompt(base, collected, this.plugin.settings.contextMaxNoteBytes);
     this.composerEl.value = "";
@@ -1844,7 +1866,10 @@ ${text}` : text;
     this.renderChips();
     const rpcId = this.api.newPromptRpcId();
     const result = await this.api.prompt(this.sessionId, prompt, "queue", rpcId);
-    if (!result.ok) new import_obsidian5.Notice(`obsidian-dsh\uFF1A${result.error ?? "\u53D1\u9001\u5931\u8D25"}`);
+    if (!result.ok) {
+      const message = result.error ?? "\u53D1\u9001\u5931\u8D25";
+      new import_obsidian5.Notice("obsidian-dsh\uFF1A" + message);
+    }
   }
   scheduleRender() {
     if (this.renderTimer) return;
